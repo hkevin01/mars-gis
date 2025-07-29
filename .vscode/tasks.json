@@ -39,6 +39,30 @@
       "command": "${workspaceFolder}/venv/bin/black",
       "args": ["src/", "tests/"],
       "group": "build"
+    },
+    {
+      "label": "quick-test",
+      "type": "shell",
+      "command": "python3",
+      "args": ["quick_test_runner.py"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "comprehensive-test",
+      "type": "shell",
+      "command": "python3",
+      "args": ["comprehensive_test_suite.py", "--open-report"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      }
     }
   ]
 }
