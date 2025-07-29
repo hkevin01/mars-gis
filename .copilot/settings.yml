@@ -1,31 +1,160 @@
 # GitHub Copilot configuration for MARS-GIS project
 project_context:
-  description: "Mars GIS analysis and visualization platform"
+  description: "Mars GIS analysis and visualization platform for exploration and mission planning"
   primary_languages: 
     - python
     - javascript
+    - typescript
     - sql
+    - yaml
+    - dockerfile
   frameworks:
     - geopandas
     - pytorch
     - fastapi
     - react
+    - material-ui
+    - leaflet
+    - cesium
+    - three.js
+    - postgis
+    - redis
+  domains:
+    - geospatial_analysis
+    - machine_learning
+    - mars_exploration
+    - 3d_visualization
+    - mission_planning
+    - terrain_analysis
   
 suggestions:
   enable_geospatial_completions: true
   enable_ml_completions: true
   enable_nasa_api_completions: true
+  enable_mars_specific_completions: true
+  enable_3d_visualization_completions: true
+  enable_mission_planning_completions: true
   
 custom_prompts:
   - name: "mars_data_processing"
     description: "Generate code for processing Mars geological data"
-    template: "Process Mars {data_type} data using GeoPandas and create visualization"
+    template: "Process Mars {data_type} data using GeoPandas and create visualization with proper Mars coordinate system"
   
   - name: "ai_terrain_analysis"
     description: "Generate ML models for terrain classification"
-    template: "Create PyTorch model for Mars terrain classification with {input_features}"
+    template: "Create PyTorch model for Mars terrain classification with {input_features} using CNN architecture"
+
+  - name: "mars_coordinate_conversion"
+    description: "Handle Mars coordinate system conversions"
+    template: "Convert coordinates between Earth and Mars projection systems using {coordinate_system}"
+
+  - name: "mission_path_planning"
+    description: "Generate path planning algorithms for Mars rovers"
+    template: "Implement {algorithm} path planning for Mars rover navigation with obstacle avoidance"
+
+  - name: "mars_visualization"
+    description: "Create 3D Mars visualization components"
+    template: "Build {visualization_type} component for Mars surface using Three.js/Cesium with {data_layers}"
+
+  - name: "atmospheric_analysis"
+    description: "Analyze Mars atmospheric conditions"
+    template: "Process Mars atmospheric data for {analysis_type} with temporal analysis and prediction"
+
+  - name: "geological_classification"
+    description: "Classify Mars geological features"
+    template: "Implement geological feature classification for {feature_type} using spectral analysis"
+
+mars_specific_context:
+  coordinate_systems:
+    - "Mars 2000 (IAU)"
+    - "Mars Equidistant Cylindrical"
+    - "Mars Sinusoidal"
+    - "MOLA areographic"
+  
+  data_sources:
+    - "NASA MRO (Mars Reconnaissance Orbiter)"
+    - "USGS Astrogeology"
+    - "ESA Mars Express"
+    - "NASA Mars Odyssey"
+    - "MOLA (Mars Orbiter Laser Altimeter)"
+  
+  terrain_types:
+    - "plains"
+    - "hills" 
+    - "mountains"
+    - "craters"
+    - "valleys"
+    - "polar_ice"
+    - "sand_dunes"
+    - "rocky_terrain"
+  
+  analysis_types:
+    - "terrain_classification"
+    - "hazard_detection"
+    - "landing_site_analysis"
+    - "mineral_composition"
+    - "atmospheric_modeling"
+    - "dust_storm_prediction"
+
+common_patterns:
+  geospatial:
+    - "geopandas.read_file() for loading spatial data"
+    - "coordinate transformation with pyproj"
+    - "spatial queries with PostGIS"
+    - "raster processing with rasterio"
+  
+  machine_learning:
+    - "PyTorch CNN for image classification"
+    - "data preprocessing with torchvision"
+    - "model training with proper validation"
+    - "inference pipeline with batch processing"
+  
+  visualization:
+    - "React components with Material-UI"
+    - "Three.js scene setup for 3D rendering"
+    - "Leaflet map initialization with custom projections"
+    - "Chart.js for data visualization"
 
 ignore_patterns:
   - "*.log"
   - "data/raw/*"
+  - "data/processed/*"
   - "venv/*"
+  - "node_modules/*"
+  - "*.pyc"
+  - "__pycache__/*"
+  - ".pytest_cache/*"
+  - "models/checkpoints/*"
+  - "cache/*"
+  - ".DS_Store"
+
+code_style:
+  python:
+    formatter: "black"
+    linter: "flake8"
+    type_checker: "mypy"
+    import_sorter: "isort"
+  
+  typescript:
+    formatter: "prettier"
+    linter: "eslint"
+    style_guide: "airbnb"
+  
+  general:
+    line_length: 88
+    indent_size: 2
+    use_trailing_commas: true
+
+ai_assistance_preferences:
+  code_generation:
+    - "Include type hints for Python functions"
+    - "Add proper error handling and logging"
+    - "Use async/await for I/O operations"
+    - "Include docstrings for public functions"
+  
+  suggestions:
+    - "Prefer composition over inheritance"
+    - "Use dependency injection patterns"
+    - "Include unit tests for new functions"
+    - "Follow SOLID principles"
+    - "Optimize for Mars-specific requirements"
