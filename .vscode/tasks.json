@@ -1,0 +1,44 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "setup-env",
+      "type": "shell",
+      "command": "python",
+      "args": ["-m", "venv", "venv"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "install-deps",
+      "type": "shell",
+      "command": "${workspaceFolder}/venv/bin/pip",
+      "args": ["install", "-r", "requirements.txt"],
+      "group": "build",
+      "dependsOn": "setup-env"
+    },
+    {
+      "label": "run-tests",
+      "type": "shell",
+      "command": "${workspaceFolder}/venv/bin/python",
+      "args": ["-m", "pytest", "tests/"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "format-code",
+      "type": "shell",
+      "command": "${workspaceFolder}/venv/bin/black",
+      "args": ["src/", "tests/"],
+      "group": "build"
+    }
+  ]
+}

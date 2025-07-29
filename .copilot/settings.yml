@@ -1,0 +1,31 @@
+# GitHub Copilot configuration for MARS-GIS project
+project_context:
+  description: "Mars GIS analysis and visualization platform"
+  primary_languages: 
+    - python
+    - javascript
+    - sql
+  frameworks:
+    - geopandas
+    - pytorch
+    - fastapi
+    - react
+  
+suggestions:
+  enable_geospatial_completions: true
+  enable_ml_completions: true
+  enable_nasa_api_completions: true
+  
+custom_prompts:
+  - name: "mars_data_processing"
+    description: "Generate code for processing Mars geological data"
+    template: "Process Mars {data_type} data using GeoPandas and create visualization"
+  
+  - name: "ai_terrain_analysis"
+    description: "Generate ML models for terrain classification"
+    template: "Create PyTorch model for Mars terrain classification with {input_features}"
+
+ignore_patterns:
+  - "*.log"
+  - "data/raw/*"
+  - "venv/*"
