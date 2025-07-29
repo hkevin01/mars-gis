@@ -1,9 +1,10 @@
 """Mars terrain classification models using PyTorch."""
 
+from typing import Any, Dict, List, Optional, Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, List, Optional, Tuple, Any
 
 try:
     import torchvision.models as models

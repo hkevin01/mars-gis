@@ -1,10 +1,10 @@
 """3D terrain reconstruction and analysis for Mars."""
 
 import json
+import logging
 import math
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Union
-import logging
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +16,8 @@ except ImportError:
     np = None
 
 try:
+    from scipy.interpolate import RBFInterpolator, griddata
     from scipy.spatial import ConvexHull, Delaunay
-    from scipy.interpolate import griddata, RBFInterpolator
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False

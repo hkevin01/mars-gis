@@ -1,31 +1,31 @@
-import React, { useState, useEffect } from 'react';
 import {
-  Drawer,
-  Box,
-  Typography,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  ListItemSecondaryAction,
-  IconButton,
-  Chip,
-  Button,
-  Divider,
-  Alert,
-  Badge,
-} from '@mui/material';
-import {
-  Close as CloseIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon,
-  Info as InfoIcon,
-  CheckCircle as SuccessIcon,
-  Delete as DeleteIcon,
-  MarkAsUnread as MarkUnreadIcon,
-  Notifications as NotificationsIcon,
+    Close as CloseIcon,
+    Delete as DeleteIcon,
+    Error as ErrorIcon,
+    Info as InfoIcon,
+    MarkAsUnread as MarkUnreadIcon,
+    Notifications as NotificationsIcon,
+    CheckCircle as SuccessIcon,
+    Warning as WarningIcon,
 } from '@mui/icons-material';
+import {
+    Alert,
+    Badge,
+    Box,
+    Button,
+    Chip,
+    Divider,
+    Drawer,
+    IconButton,
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemSecondaryAction,
+    ListItemText,
+    Typography,
+} from '@mui/material';
 import { formatDistanceToNow } from 'date-fns';
+import React, { useState } from 'react';
 
 interface Notification {
   id: string;

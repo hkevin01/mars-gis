@@ -3,7 +3,7 @@
 import json
 import time
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 try:
     import torch

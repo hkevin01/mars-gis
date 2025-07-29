@@ -1,7 +1,6 @@
 import React, { Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
-import { Box, CircularProgress } from '@mui/material';
 import { Helmet } from 'react-helmet-async';
+import { Route, Routes } from 'react-router-dom';
 
 import { Layout } from './components/Layout';
 import { LoadingScreen } from './components/LoadingScreen';

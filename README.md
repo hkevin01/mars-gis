@@ -1,19 +1,44 @@
-# MARS-GIS: Mars Geospatial Intelligence System
+# MARS-GIS: Mars Exploration and Geospatial Analysis Platform
 
 [![CI/CD](https://github.com/yourusername/mars-gis/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/yourusername/mars-gis/actions)
 [![codecov](https://codecov.io/gh/yourusername/mars-gis/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/mars-gis)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A comprehensive geospatial analysis and visualization platform for Mars exploration data, integrating NASA's Mars datasets, USGS planetary data, and advanced AI/ML techniques for terrain analysis, landing site selection, and mission planning support.
+A comprehensive geospatial analysis and mission planning platform designed specifically for Mars exploration. It combines advanced AI/ML capabilities with intuitive visualization tools to support scientific research and mission operations.
 
-## 🚀 Features
+![MARS-GIS Architecture](docs/images/architecture-overview.png)
 
-- **Multi-source Data Integration**: NASA MRO, MGS, USGS Astrogeology data
-- **AI-Powered Analysis**: Deep learning models for terrain classification and hazard detection
-- **3D Visualization**: Interactive Mars globe with real-time data layers
-- **Mission Planning Tools**: Landing site optimization and path planning algorithms
-- **Real-time Monitoring**: Live satellite feed integration with change detection
-- **Collaborative Platform**: Multi-user annotation and shared workspace capabilities
+## 🚀 Key Features
+
+### 🗺️ Advanced Geospatial Analysis
+- High-resolution Mars surface imagery processing
+- Multi-layer geological and atmospheric data visualization
+- Real-time terrain classification and hazard detection
+- 3D terrain reconstruction and modeling
+
+### 🤖 AI-Powered Intelligence
+- PyTorch-based terrain classification (8 surface types)
+- Automated hazard detection for safe landing zones
+- Atmospheric analysis and dust storm prediction
+- Mineral composition analysis from spectral data
+
+### 🚀 Mission Planning & Management
+- Advanced path planning with A* and RRT algorithms
+- Resource optimization and constraint satisfaction
+- Timeline-based mission scheduling
+- Real-time mission monitoring and control
+
+### 📊 Interactive Visualization
+- 3D Mars globe with Cesium.js integration
+- Interactive 2D mapping with Leaflet
+- Real-time data dashboards and analytics
+- Professional Material-UI interface
+
+### 🔧 Enterprise-Ready Infrastructure
+- Scalable microservices architecture
+- PostgreSQL with PostGIS for spatial data
+- Redis for caching and real-time features
+- Kubernetes deployment with auto-scaling
 
 ## 🛠️ Technology Stack
 

@@ -1,0 +1,480 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mars-gis
+  labels:
+    name: mars-gis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mars-gis-database
+  namespace: mars-gis
+  labels:
+    app: mars-gis-database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mars-gis-database
+  template:
+    metadata:
+      labels:
+        app: mars-gis-database
+    spec:
+      containers:
+      - name: postgres
+        image: postgis/postgis:15-3.3
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "mars_gis"
+        - name: POSTGRES_USER
+          value: "mars_user"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mars-gis-secrets
+              key: database-password
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - mars_user
+            - -d
+            - mars_gis
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - mars_user
+            - -d
+            - mars_gis
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mars-gis-database-service
+  namespace: mars-gis
+spec:
+  selector:
+    app: mars-gis-database
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mars-gis-redis
+  namespace: mars-gis
+  labels:
+    app: mars-gis-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mars-gis-redis
+  template:
+    metadata:
+      labels:
+        app: mars-gis-redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        command: ["redis-server", "--appendonly", "yes"]
+        volumeMounts:
+        - name: redis-storage
+          mountPath: /data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: redis-storage
+        persistentVolumeClaim:
+          claimName: redis-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mars-gis-redis-service
+  namespace: mars-gis
+spec:
+  selector:
+    app: mars-gis-redis
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mars-gis-backend
+  namespace: mars-gis
+  labels:
+    app: mars-gis-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mars-gis-backend
+  template:
+    metadata:
+      labels:
+        app: mars-gis-backend
+    spec:
+      containers:
+      - name: backend
+        image: mars-gis/backend:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://mars_user:$(DATABASE_PASSWORD)@mars-gis-database-service:5432/mars_gis"
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mars-gis-secrets
+              key: database-password
+        - name: REDIS_URL
+          value: "redis://mars-gis-redis-service:6379/0"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mars-gis-secrets
+              key: secret-key
+        - name: DEBUG
+          value: "false"
+        - name: ALLOWED_HOSTS
+          value: "mars-gis-backend-service,localhost,127.0.0.1"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mars-gis-backend-service
+  namespace: mars-gis
+spec:
+  selector:
+    app: mars-gis-backend
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mars-gis-worker
+  namespace: mars-gis
+  labels:
+    app: mars-gis-worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mars-gis-worker
+  template:
+    metadata:
+      labels:
+        app: mars-gis-worker
+    spec:
+      containers:
+      - name: worker
+        image: mars-gis/backend:latest
+        command: ["python", "-m", "celery", "worker", "-A", "mars_gis.core.celery", "--loglevel=info"]
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://mars_user:$(DATABASE_PASSWORD)@mars-gis-database-service:5432/mars_gis"
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mars-gis-secrets
+              key: database-password
+        - name: REDIS_URL
+          value: "redis://mars-gis-redis-service:6379/0"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mars-gis-secrets
+              key: secret-key
+        - name: DEBUG
+          value: "false"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          exec:
+            command:
+            - python
+            - -m
+            - celery
+            - inspect
+            - ping
+            - -A
+            - mars_gis.core.celery
+          initialDelaySeconds: 60
+          periodSeconds: 30
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mars-gis-frontend
+  namespace: mars-gis
+  labels:
+    app: mars-gis-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mars-gis-frontend
+  template:
+    metadata:
+      labels:
+        app: mars-gis-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: mars-gis/frontend:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: REACT_APP_API_URL
+          value: "http://mars-gis-backend-service:8000/api/v1"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mars-gis-frontend-service
+  namespace: mars-gis
+spec:
+  selector:
+    app: mars-gis-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mars-gis-ingress
+  namespace: mars-gis
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - mars-gis.yourdomain.com
+    secretName: mars-gis-tls
+  rules:
+  - host: mars-gis.yourdomain.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: mars-gis-backend-service
+            port:
+              number: 8000
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mars-gis-frontend-service
+            port:
+              number: 80
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: mars-gis
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: fast-ssd
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: mars-gis
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: fast-ssd
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mars-gis-secrets
+  namespace: mars-gis
+type: Opaque
+data:
+  database-password: bWFyc19wYXNzd29yZA== # base64 encoded "mars_password"
+  secret-key: eW91ci1zZWNyZXQta2V5LWNoYW5nZS1pbi1wcm9kdWN0aW9u # base64 encoded secret
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: mars-gis-backend-pdb
+  namespace: mars-gis
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: mars-gis-backend
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: mars-gis-frontend-pdb
+  namespace: mars-gis
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: mars-gis-frontend
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mars-gis-backend-hpa
+  namespace: mars-gis
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mars-gis-backend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mars-gis-worker-hpa
+  namespace: mars-gis
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mars-gis-worker
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80

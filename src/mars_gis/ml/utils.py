@@ -1,10 +1,10 @@
 """ML utilities for Mars GIS system."""
 
 import json
+import logging
 import pickle
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
-import logging
+from typing import Any, Dict, List, Optional, Tuple
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

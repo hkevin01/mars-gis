@@ -1,10 +1,10 @@
 """3D visualization utilities for Mars terrain and data."""
 
 import json
+import logging
 import math
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Union
-import logging
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 

@@ -2,10 +2,10 @@
 
 import heapq
 import json
+import logging
 import time
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Set
-import logging
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 

@@ -3,12 +3,12 @@
 import json
 import time
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 try:
+    import numpy as np
     import torch
     import torch.nn.functional as F
-    import numpy as np
     TORCH_AVAILABLE = True
     NUMPY_AVAILABLE = True
 except ImportError:
