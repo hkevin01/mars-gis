@@ -1,0 +1,134 @@
+{
+  "name": "mars-gis-frontend",
+  "version": "1.0.0",
+  "description": "Mars GIS Web Interface - Professional geospatial analysis platform for Mars exploration",
+  "private": true,
+  "homepage": ".",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.8.0",
+    "react-scripts": "5.0.1",
+    "@types/react": "^18.0.27",
+    "@types/react-dom": "^18.0.10",
+    "typescript": "^4.9.4",
+    "@emotion/react": "^11.10.5",
+    "@emotion/styled": "^11.10.5",
+    "@mui/material": "^5.11.6",
+    "@mui/icons-material": "^5.11.0",
+    "@mui/lab": "^5.0.0-alpha.117",
+    "@mui/x-data-grid": "^5.17.20",
+    "three": "^0.148.0",
+    "@types/three": "^0.148.0",
+    "@react-three/fiber": "^8.10.0",
+    "@react-three/drei": "^9.52.0",
+    "cesium": "^1.101.0",
+    "resium": "^1.16.1",
+    "leaflet": "^1.9.3",
+    "react-leaflet": "^4.2.0",
+    "@types/leaflet": "^1.9.0",
+    "deck.gl": "^8.8.22",
+    "@deck.gl/react": "^8.8.22",
+    "@deck.gl/core": "^8.8.22",
+    "@deck.gl/layers": "^8.8.22",
+    "@deck.gl/geo-layers": "^8.8.22",
+    "mapbox-gl": "^2.12.0",
+    "react-map-gl": "^7.0.20",
+    "d3": "^7.8.2",
+    "@types/d3": "^7.4.0",
+    "plotly.js": "^2.18.0",
+    "react-plotly.js": "^2.6.0",
+    "@types/plotly.js": "^2.12.29",
+    "socket.io-client": "^4.6.1",
+    "axios": "^1.3.0",
+    "date-fns": "^2.29.3",
+    "recharts": "^2.4.3",
+    "react-query": "^3.39.3",
+    "zustand": "^4.3.2",
+    "immer": "^9.0.18",
+    "react-spring": "^9.6.1",
+    "framer-motion": "^8.5.2",
+    "react-hook-form": "^7.43.0",
+    "yup": "^0.32.11",
+    "@hookform/resolvers": "^2.9.10",
+    "react-helmet-async": "^1.3.0",
+    "react-error-boundary": "^3.1.4",
+    "web-vitals": "^3.1.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "@types/jest": "^27.5.2",
+    "@types/node": "^16.18.11",
+    "eslint": "^8.33.0",
+    "@typescript-eslint/eslint-plugin": "^5.50.0",
+    "@typescript-eslint/parser": "^5.50.0",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^2.8.3",
+    "eslint-config-prettier": "^8.6.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.1.0",
+    "npm-run-all": "^4.1.5",
+    "cross-env": "^7.0.3"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "type-check": "tsc --noEmit",
+    "analyze": "npm run build && npx bundle-analyzer build/static/js/*.js",
+    "prepare": "husky install"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest",
+      "prettier"
+    ],
+    "rules": {
+      "@typescript-eslint/no-unused-vars": "warn",
+      "react-hooks/exhaustive-deps": "warn",
+      "no-console": "warn"
+    }
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "proxy": "http://localhost:8000",
+  "keywords": [
+    "mars",
+    "gis",
+    "geospatial",
+    "react",
+    "typescript",
+    "3d",
+    "visualization",
+    "space",
+    "exploration"
+  ],
+  "author": "MARS-GIS Development Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mars-gis/mars-gis.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mars-gis/mars-gis/issues"
+  }
+}
