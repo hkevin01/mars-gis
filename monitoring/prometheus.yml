@@ -1,0 +1,65 @@
+# Prometheus configuration for Mars GIS Platform monitoring
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Mars GIS API monitoring
+  - job_name: 'mars-gis-api'
+    static_configs:
+      - targets: ['mars-gis-api:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+    scrape_timeout: 5s
+
+  # PostgreSQL monitoring
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 10s
+
+  # Redis monitoring
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 10s
+
+  # System monitoring
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 10s
+
+  # Docker container monitoring
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 10s
+
+  # Nginx monitoring
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+    scrape_interval: 10s
+
+  # Application-specific metrics
+  - job_name: 'mars-gis-ml-models'
+    static_configs:
+      - targets: ['mars-gis-api:8000']
+    metrics_path: '/metrics/ml'
+    scrape_interval: 30s
+
+  - job_name: 'mars-gis-geospatial'
+    static_configs:
+      - targets: ['mars-gis-api:8000']
+    metrics_path: '/metrics/geospatial'
+    scrape_interval: 30s
