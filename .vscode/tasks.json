@@ -63,6 +63,18 @@
         "reveal": "always",
         "panel": "new"
       }
+    },
+    {
+      "label": "integration-test",
+      "type": "shell",
+      "command": "python3",
+      "args": ["tests/test_integration.py"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      }
     }
   ]
 }

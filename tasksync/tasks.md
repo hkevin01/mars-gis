@@ -1,3 +1,2 @@
-File Reference: /home/kevin/Projects/mars-gis/docs/plan.md
-
-Implement complete MARS-GIS project as specified in plan.md. Create all directory structures, files, and components according to the detailed specifications.
+# Task
+implmenet plan_part3.md , after implmenting update plan_part3.md with what was implmetend how much was implmented and what was not implmeneted
