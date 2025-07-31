@@ -1,12 +1,10 @@
 # MARS-GIS: Mars Exploration and Geospatial Analysis Platform
 
-[![CI/CD](https://github.com/yourusername/mars-gis/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/yourusername/mars-gis/actions)
-[![codecov](https://codecov.io/gh/yourusername/mars-gis/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/mars-gis)
+[![CI/CD](https://github.com/hkevin01/mars-gis/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/hkevin01/mars-gis/actions)
+[![codecov](https://codecov.io/gh/hkevin01/mars-gis/branch/main/graph/badge.svg)](https://codecov.io/gh/hkevin01/mars-gis)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A comprehensive geospatial analysis and mission planning platform designed specifically for Mars exploration. It combines advanced AI/ML capabilities with intuitive visualization tools to support scientific research and mission operations.
-
-![MARS-GIS Architecture](docs/images/architecture-overview.png)
 
 ## 🚀 Key Features
 
@@ -62,7 +60,7 @@ A comprehensive geospatial analysis and mission planning platform designed speci
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/mars-gis.git
+git clone https://github.com/hkevin01/mars-gis.git
 cd mars-gis
 ```
 
@@ -193,7 +191,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For questions and support:
 - 📧 Email: kevin.hildebrand@gmail.com
-- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/mars-gis/issues)
+- 🐛 Issues: [GitHub Issues](https://github.com/hkevin01/mars-gis/issues)
 - 📖 Documentation: [Full Documentation](https://mars-gis.readthedocs.io/)
 
 ---
