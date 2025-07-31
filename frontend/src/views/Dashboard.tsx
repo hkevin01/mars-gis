@@ -36,10 +36,77 @@ import {
     TableHead,
     TableRow,
     Tabs,
+    Tooltip,
     Typography
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { Area, AreaChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+
+// Types for dashboard data
+interface DashboardMetrics {
+  activeMissions: number;
+  dataProcessingProgress: number;
+  systemHealth: 'optimal' | 'warning' | 'critical';
+  analysisComplete: number;
+  totalDatasets: number;
+  processingQueue: number;
+}
+
+interface SystemAlert {
+  id: string;
+  level: 'info' | 'warning' | 'critical';
+  message: string;
+  timestamp: string;
+}
+
+// Error Boundary Component
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Dashboard Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Box data-testid="error-boundary" p={3}>
+          <Alert severity="error">
+            <Typography variant="h6">Something went wrong</Typography>
+            <Typography variant="body2">
+              Unable to load dashboard. Please refresh the page or contact support.
+            </Typography>
+          </Alert>
+        </Box>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// API functions
+const fetchDashboardMetrics = async (): Promise<DashboardMetrics> => {
+  // Mock data for now - replace with actual API call
+  return {
+    activeMissions: 3,
+    dataProcessingProgress: 75,
+    systemHealth: 'optimal',
+    analysisComplete: 12,
+    totalDatasets: 156,
+    processingQueue: 5
+  };
+};
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -171,10 +238,10 @@ export const Dashboard: React.FC = () => {
             </IconButton>
           </Box>
         </Box>
-        
+
         {/* Critical Alerts */}
         <Alert severity="warning" sx={{ mb: 2 }}>
-          <strong>Weather Alert:</strong> Dust storm approaching Olympia Undae region. 
+          <strong>Weather Alert:</strong> Dust storm approaching Olympia Undae region.
           Rover Alpha operations may be affected. Estimated arrival: 6 hours.
         </Alert>
       </Box>
