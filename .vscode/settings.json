@@ -7,8 +7,13 @@
   "python.linting.pylintEnabled": true,
   "python.linting.flake8Enabled": true,
   "python.formatting.provider": "black",
-  "python.formatting.blackArgs": ["--line-length=88"],
-  "python.sortImports.args": ["--profile", "black"],
+  "python.formatting.blackArgs": [
+    "--line-length=88"
+  ],
+  "python.sortImports.args": [
+    "--profile",
+    "black"
+  ],
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.organizeImports": "explicit"
@@ -48,5 +53,24 @@
     "**/venv": true,
     "**/env": true,
     "**/__pycache__": true
-  }
+  },
+  "github.copilot.editor.enableAutoCompletions": true,
+  "github.copilot.chat.enabled": true,
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": true,
+    "markdown": true,
+    "scminput": false
+  },
+  "github.copilot.advanced": {
+    "temperature": 0.3,
+    "top_p": 1,
+    "listCount": 10
+  },
+  "git.commitMessageConvention": "conventional",
+  "git.enableSmartCommit": true,
+  "git.suggestSmartCommit": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "workbench.editor.enablePreview": false
 }
