@@ -1,0 +1,91 @@
+# Testing Environment Configuration
+version: "3.8"
+
+services:
+  # Test Database (isolated)
+  test-database:
+    image: postgis/postgis:15-3.3
+    container_name: mars-gis-test-db
+    environment:
+      POSTGRES_DB: mars_gis_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+    tmpfs:
+      - /var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - test-network
+
+  # Test Redis
+  test-redis:
+    image: redis:7-alpine
+    container_name: mars-gis-test-redis
+    tmpfs:
+      - /data
+    ports:
+      - "6380:6379"
+    networks:
+      - test-network
+
+  # Backend Testing
+  backend-test:
+    build:
+      context: ../../backend
+      dockerfile: ../docker/backend/Dockerfile
+      target: testing
+    container_name: mars-gis-backend-test
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://test_user:test_password@test-database:5432/mars_gis_test
+      - REDIS_URL=redis://test-redis:6379/0
+      - CI=true
+    volumes:
+      - ../../backend:/app
+      - ../../backend/coverage:/app/coverage
+    depends_on:
+      - test-database
+      - test-redis
+    networks:
+      - test-network
+    command: npm run test:coverage
+
+  # Frontend Unit Tests
+  frontend-unit-test:
+    build:
+      context: ../../frontend
+      dockerfile: ../docker/frontend/Dockerfile
+      target: testing
+    container_name: mars-gis-frontend-unit-test
+    volumes:
+      - ../../frontend:/app
+      - ../../frontend/coverage:/app/coverage
+    environment:
+      - NODE_ENV=test
+      - CI=true
+    command: npm run test:unit:coverage
+    networks:
+      - test-network
+
+  # Integration Tests
+  integration-tests:
+    build:
+      context: ../../frontend
+      dockerfile: ../docker/frontend/Dockerfile
+      target: testing
+    container_name: mars-gis-integration-tests
+    volumes:
+      - ../../frontend:/app
+    environment:
+      - NODE_ENV=test
+      - REACT_APP_API_URL=http://backend-test:8000/api/v1
+      - CI=true
+    depends_on:
+      - backend-test
+    command: npm run test:integration
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge

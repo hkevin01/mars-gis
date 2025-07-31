@@ -1,0 +1,31 @@
+# Development Environment Override
+version: "3.8"
+
+services:
+  backend-dev:
+    environment:
+      - HOT_RELOAD=true
+      - WATCH_FILES=true
+    volumes:
+      - ../../backend:/app:cached
+      - /app/node_modules
+    command: npm run dev
+
+  frontend-dev:
+    environment:
+      - FAST_REFRESH=true
+      - REACT_APP_ENVIRONMENT=development
+    volumes:
+      - ../../frontend/src:/app/src:cached
+      - ../../frontend/public:/app/public:cached
+      - /app/node_modules
+
+  # Additional development tools
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mars-gis-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - mars-network

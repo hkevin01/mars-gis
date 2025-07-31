@@ -75,6 +75,30 @@
         "reveal": "always",
         "panel": "new"
       }
+    },
+    {
+      "label": "make-script-executable",
+      "type": "shell",
+      "command": "chmod",
+      "args": ["+x", "migrate_docker_cleanup.sh"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "run-docker-migration",
+      "type": "shell",
+      "command": "./migrate_docker_cleanup.sh",
+      "group": "build",
+      "dependsOn": "make-script-executable",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      }
     }
   ]
 }

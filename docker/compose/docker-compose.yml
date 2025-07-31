@@ -1,0 +1,360 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database with PostGIS
+  database:
+    image: postgis/postgis:15-3.3
+    container_name: mars-gis-db
+    environment:
+      POSTGRES_DB: mars_gis
+      POSTGRES_USER: mars_user
+      POSTGRES_PASSWORD: mars_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - mars-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mars_user -d mars_gis"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Redis for caching and session storage
+  redis:
+    image: redis:7-alpine
+    container_name: mars-gis-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - mars-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend API - Development
+  backend-dev:
+    build:
+      context: ../../backend
+      dockerfile: ../docker/backend/Dockerfile
+      target: development
+    container_name: mars-gis-backend-dev
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://mars_user:mars_password@database:5432/mars_gis
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=development-secret-key
+      - DEBUG=true
+      - ALLOWED_HOSTS=localhost,127.0.0.1,frontend-dev
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:80
+      - LOG_LEVEL=debug
+    volumes:
+      - ../../backend:/app
+      - /app/node_modules
+      - ../../backend/data:/app/data
+      - ../../backend/logs:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mars-network
+    restart: unless-stopped
+    profiles:
+      - development
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend API - Production
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: ../docker/backend/Dockerfile
+      target: production
+    container_name: mars-gis-backend
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://mars_user:mars_password@database:5432/mars_gis
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=your-secret-key-change-in-production
+      - DEBUG=false
+      - ALLOWED_HOSTS=localhost,127.0.0.1,frontend
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:80
+    volumes:
+      - ../../backend/data:/app/data
+      - ../../backend/logs:/app/logs
+    ports:
+      - "8080:8000"
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mars-network
+    restart: unless-stopped
+    profiles:
+      - production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend - Development
+  frontend-dev:
+    build:
+      context: ../../frontend
+      dockerfile: ../docker/frontend/Dockerfile
+      target: development
+    container_name: mars-gis-frontend-dev
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_URL=http://localhost:8000/api/v1
+      - REACT_APP_WS_URL=ws://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ../../frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend-dev
+    networks:
+      - mars-network
+    restart: unless-stopped
+    profiles:
+      - development
+    stdin_open: true
+    tty: true
+
+  # Frontend - Production
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: ../docker/frontend/Dockerfile
+      target: production
+    container_name: mars-gis-frontend
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_API_URL=/api/v1
+      - REACT_APP_WS_URL=/ws
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - mars-network
+    restart: unless-stopped
+    profiles:
+      - production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend Testing
+  frontend-test:
+    build:
+      context: ../../frontend
+      dockerfile: ../docker/frontend/Dockerfile
+      target: testing
+    container_name: mars-gis-frontend-test
+    volumes:
+      - ../../frontend:/app
+      - /app/node_modules
+      - ../../frontend/coverage:/app/coverage
+    environment:
+      NODE_ENV: test
+      CI: true
+    command: npm run test:coverage
+    networks:
+      - mars-network
+    profiles:
+      - testing
+
+  # E2E Testing with Cypress
+  e2e-tests:
+    build:
+      context: ../../frontend
+      dockerfile: ../docker/frontend/Dockerfile
+      target: e2e-testing
+    container_name: mars-gis-e2e-tests
+    volumes:
+      - ../../frontend:/app
+      - /app/node_modules
+      - ../../frontend/cypress/screenshots:/app/cypress/screenshots
+      - ../../frontend/cypress/videos:/app/cypress/videos
+    environment:
+      CYPRESS_baseUrl: http://frontend-dev:3000
+      CYPRESS_apiUrl: http://backend-dev:8000/api/v1
+      NODE_ENV: test
+      CI: true
+    depends_on:
+      - frontend-dev
+      - backend-dev
+    networks:
+      - mars-network
+    profiles:
+      - testing
+
+  # Storybook Documentation
+  storybook:
+    build:
+      context: ../../frontend
+      dockerfile: ../docker/frontend/Dockerfile
+      target: development
+    container_name: mars-gis-storybook
+    command: npm run storybook
+    ports:
+      - "6006:6006"
+    volumes:
+      - ../../frontend:/app
+      - /app/node_modules
+    networks:
+      - mars-network
+    profiles:
+      - documentation
+
+  # Background Worker for AI/ML tasks
+  worker:
+    build:
+      context: ../../backend
+      dockerfile: ../docker/backend/Dockerfile
+    container_name: mars-gis-worker
+    command:
+      [
+        "python",
+        "-m",
+        "celery",
+        "worker",
+        "-A",
+        "mars_gis.core.celery",
+        "--loglevel=info",
+      ]
+    environment:
+      - DATABASE_URL=postgresql://mars_user:mars_password@database:5432/mars_gis
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=your-secret-key-change-in-production
+      - DEBUG=false
+    volumes:
+      - ../../backend/data:/app/data
+      - ../../backend/logs:/app/logs
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mars-network
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-m",
+          "celery",
+          "inspect",
+          "ping",
+          "-A",
+          "mars_gis.core.celery",
+        ]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+
+  # Celery Beat Scheduler
+  scheduler:
+    build:
+      context: ../../backend
+      dockerfile: ../docker/backend/Dockerfile
+    container_name: mars-gis-scheduler
+    command:
+      [
+        "python",
+        "-m",
+        "celery",
+        "beat",
+        "-A",
+        "mars_gis.core.celery",
+        "--loglevel=info",
+      ]
+    environment:
+      - DATABASE_URL=postgresql://mars_user:mars_password@database:5432/mars_gis
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=your-secret-key-change-in-production
+      - DEBUG=false
+    volumes:
+      - ../../backend/data:/app/data
+      - ../../backend/logs:/app/logs
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mars-network
+    restart: unless-stopped
+
+  # Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mars-gis-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../../monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+    networks:
+      - mars-network
+    restart: unless-stopped
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mars-gis-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ../../monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ../../monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - mars-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  mars-network:
+    driver: bridge

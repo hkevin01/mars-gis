@@ -1,11 +1,11 @@
 # MARS-GIS Docker Configuration - REDIRECT
-#
+# 
 # ⚠️ IMPORTANT: Docker files have been moved to docker/ directory
-#
+# 
 # NEW STRUCTURE:
 #   docker/
 #   ├── backend/Dockerfile
-#   ├── frontend/Dockerfile
+#   ├── frontend/Dockerfile  
 #   ├── compose/
 #   │   ├── docker-compose.yml           # Main development environment
 #   │   ├── docker-compose.prod.yml      # Production environment
@@ -15,10 +15,10 @@
 #   └── README.md                        # Complete documentation
 #
 # USAGE:
-#
+#   
 #   # Use the helper script (RECOMMENDED):
 #   ./docker/docker-helper.sh dev        # Start development environment
-#   ./docker/docker-helper.sh prod       # Start production environment
+#   ./docker/docker-helper.sh prod       # Start production environment  
 #   ./docker/docker-helper.sh test       # Run tests
 #   ./docker/docker-helper.sh help       # See all available commands
 #

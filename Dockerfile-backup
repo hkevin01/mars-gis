@@ -1,0 +1,34 @@
+# MARS-GIS Dockerfile - REDIRECT
+# 
+# ⚠️ IMPORTANT: Docker files have been moved to docker/ directory
+# 
+# NEW LOCATIONS:
+#   docker/backend/Dockerfile   # Backend API Dockerfile
+#   docker/frontend/Dockerfile  # Frontend React Dockerfile
+#
+# USAGE:
+#   ./docker/docker-helper.sh dev     # Development environment
+#   ./docker/docker-helper.sh prod    # Production environment
+#   ./docker/docker-helper.sh build   # Build specific services
+#
+# See docker/README.md for complete documentation
+
+FROM alpine:latest
+
+RUN echo "🚀 MARS-GIS Dockerfile Migration Notice" && \
+    echo "" && \
+    echo "⚠️  Docker files have been moved to docker/ directory" && \
+    echo "" && \
+    echo "📁 NEW LOCATIONS:" && \
+    echo "   docker/backend/Dockerfile   # Backend API" && \
+    echo "   docker/frontend/Dockerfile  # Frontend React" && \
+    echo "" && \
+    echo "📋 USAGE:" && \
+    echo "   ./docker/docker-helper.sh dev    # Development" && \
+    echo "   ./docker/docker-helper.sh prod   # Production" && \
+    echo "   ./docker/docker-helper.sh build  # Build services" && \
+    echo "" && \
+    echo "📚 See docker/README.md for complete documentation" && \
+    sleep 5
+
+CMD ["echo", "Use: ./docker/docker-helper.sh help"]
