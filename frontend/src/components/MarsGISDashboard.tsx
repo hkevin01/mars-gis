@@ -1,32 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  Bell, 
-  Settings, 
-  Upload, 
-  Download, 
-  Play, 
-  Pause, 
-  BarChart3, 
-  Globe, 
-  Rocket, 
-  Users, 
-  FileText, 
-  AlertTriangle, 
-  CheckCircle,
-  Clock,
-  Activity,
-  MapPin,
-  Zap,
-  TrendingUp,
-  Eye,
-  Filter,
-  RefreshCw,
-  Plus,
-  Edit,
-  Trash2,
-  X
+import {
+    Activity,
+    BarChart3,
+    Bell,
+    Download,
+    Edit,
+    Eye,
+    FileText,
+    Filter,
+    Globe,
+    MapPin,
+    Pause,
+    Play,
+    Plus,
+    RefreshCw,
+    Rocket,
+    Search,
+    Settings,
+    Trash2,
+    TrendingUp,
+    Upload,
+    Users,
+    X,
+    Zap
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 // Types
 interface Mission {
@@ -206,7 +203,7 @@ const MarsGISDashboard: React.FC = () => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsLoading(false);
-    
+
     // Add notification
     const newNotification: Notification = {
       id: `notif-${Date.now()}`,
@@ -220,8 +217,8 @@ const MarsGISDashboard: React.FC = () => {
   };
 
   const markNotificationAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notif => 
+    setNotifications(prev =>
+      prev.map(notif =>
         notif.id === id ? { ...notif, read: true } : notif
       )
     );
@@ -460,8 +457,8 @@ const MarsGISDashboard: React.FC = () => {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Notifications</h3>
                   <div className="space-y-4">
                     {notifications.slice(0, 3).map(notification => (
-                      <div 
-                        key={notification.id} 
+                      <div
+                        key={notification.id}
                         className={`p-3 rounded-lg cursor-pointer transition-colors ${
                           notification.read ? 'bg-gray-50' : 'bg-blue-50 border border-blue-200'
                         }`}
@@ -560,7 +557,7 @@ const MarsGISDashboard: React.FC = () => {
                         <span className="text-sm font-medium">{mission.progress}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
+                        <div
                           className="bg-red-600 h-2 rounded-full transition-all duration-500"
                           style={{ width: `${mission.progress}%` }}
                         ></div>
