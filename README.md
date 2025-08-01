@@ -29,7 +29,7 @@ npm start
 ```
 **Then open:** <http://localhost:3000> for the **professional Mars exploration GUI**
 
-#### **2. Start the API Server** 
+#### **2. Start the API Server**
 ```bash
 cd /home/kevin/Projects/mars-gis
 source venv/bin/activate
@@ -297,7 +297,7 @@ mars-gis/
 
 1. **Navigate to "Data Management" tab**
 2. **Browse NASA/USGS datasets** - Real scientific data sources
-3. **Monitor processing progress** - Live job queue management  
+3. **Monitor processing progress** - Live job queue management
 4. **Export analysis results** - Download in GeoTIFF, HDF5, JSON formats
 5. **Generate reports** - Create scientific documentation
 
@@ -308,7 +308,7 @@ mars-gis/
 ### ✅ **Professional Mapping Platform**
 
 - **OpenLayers 8.2.0** - Industry-standard web GIS integration
-- **NASA Mars Trek API** - Real NASA imagery and elevation data  
+- **NASA Mars Trek API** - Real NASA imagery and elevation data
 - **USGS Astrogeology** - Professional Mars mapping services
 - **Scientific Accuracy** - Official space agency coordinate systems and datasets
 - **Interactive Controls** - Professional zoom, pan, rotate with smooth animations
@@ -351,7 +351,7 @@ mars-gis/
 # Backend tests
 pytest tests/
 
-# Frontend tests  
+# Frontend tests
 cd frontend && npm test
 ```
 
