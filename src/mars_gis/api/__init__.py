@@ -6,10 +6,11 @@ ISO/IEC 29148:2011 requirements specification.
 """
 
 try:
-    from fastapi import APIRouter, HTTPException, Query, Path, Depends
-    from fastapi.responses import StreamingResponse
-    from typing import Optional, List, Dict, Any
     from datetime import datetime
+    from typing import Any, Dict, List, Optional
+
+    from fastapi import APIRouter, Depends, HTTPException, Path, Query
+    from fastapi.responses import StreamingResponse
     from pydantic import BaseModel, Field
     FASTAPI_AVAILABLE = True
 except ImportError:
@@ -19,8 +20,8 @@ except ImportError:
     BaseModel = object
     Field = lambda **kwargs: None
 
-import json
 import asyncio
+import json
 from pathlib import Path as PathLib
 
 # Import MARS-GIS core modules
@@ -50,8 +51,8 @@ except ImportError:
 
 # Import mission planning modules
 try:
-    from mars_gis.geospatial.path_planning import MarsPathPlanner
     from mars_gis.database.models import MissionPlan
+    from mars_gis.geospatial.path_planning import MarsPathPlanner
     MISSION_MODULES_AVAILABLE = True
 except ImportError:
     MISSION_MODULES_AVAILABLE = False
@@ -60,11 +61,11 @@ except ImportError:
 
 # Pydantic models for API requests/responses
 if FASTAPI_AVAILABLE:
-    
+
     class MarsDataQuery(BaseModel):
         """Mars data query parameters - Requirement FR-DM-001"""
         lat_min: float = Field(..., ge=-90, le=90, description="Minimum latitude")
-        lat_max: float = Field(..., ge=-90, le=90, description="Maximum latitude") 
+        lat_max: float = Field(..., ge=-90, le=90, description="Maximum latitude")
         lon_min: float = Field(..., ge=-180, le=180, description="Minimum longitude")
         lon_max: float = Field(..., ge=-180, le=180, description="Maximum longitude")
         data_types: List[str] = Field(default=["imagery", "elevation"], description="Types of data to retrieve")
@@ -131,7 +132,7 @@ def create_api_router():
     """Create and configure API router with all endpoints."""
     if not FASTAPI_AVAILABLE:
         return None
-    
+
     # Import the implementation from routes module
     try:
         from .routes import create_api_router as _create_router
@@ -140,4 +141,13 @@ def create_api_router():
         return None
 
 # Export for easy importing
-__all__ = ["create_api_router"]
+__all__ = [
+    "create_api_router",
+    "FASTAPI_AVAILABLE", "APIRouter", "HTTPException", "Query", "Path",
+    "StreamingResponse", "asyncio", "datetime", "Optional",
+    "MarsDataQuery", "InferenceRequest", "MissionCreateRequest",
+    "StreamSubscribeRequest", "APIResponse",
+    "DATA_CLIENTS_AVAILABLE", "ML_MODELS_AVAILABLE", "MISSION_MODULES_AVAILABLE",
+    "NASADataClient", "USGSDataClient", "MarsPathPlanner",
+    "EarthMarsTransferModel", "LandingSiteOptimizer", "TerrainClassifier"
+]

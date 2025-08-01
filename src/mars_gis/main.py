@@ -28,7 +28,7 @@ def create_app():
         raise ImportError(
             "FastAPI not available. Please install requirements.txt"
         )
-    
+
     app = FastAPI(
         title="MARS-GIS API",
         description="Mars Geospatial Intelligence System API - "
@@ -75,7 +75,7 @@ def create_app():
             "requirements_compliance": "ISO/IEC 29148:2011",
             "endpoints": {
                 "mars_data": "/api/v1/mars-data/*",
-                "ml_inference": "/api/v1/inference/*", 
+                "ml_inference": "/api/v1/inference/*",
                 "missions": "/api/v1/missions/*",
                 "streams": "/api/v1/streams/*",
                 "system": "/api/v1/system/*"
@@ -105,12 +105,12 @@ def run_development_server():
         print("❌ FastAPI not available. Please install requirements:")
         print("pip install -r requirements.txt")
         return
-    
+
     print("🚀 Starting MARS-GIS Development Server")
     print("📋 API Documentation: http://localhost:8000/docs")
     print("🔄 API Alternative Docs: http://localhost:8000/redoc")
     print("⚡ Server will auto-reload on code changes")
-    
+
     uvicorn.run(
         "mars_gis.main:app",
         host="0.0.0.0",
@@ -125,9 +125,9 @@ def main():
     if not FASTAPI_AVAILABLE:
         print("FastAPI not available. Please install requirements.txt")
         return
-    
+
     app = create_app()
-    
+
     if uvicorn:
         uvicorn.run(
             app,
