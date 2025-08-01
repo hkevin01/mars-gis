@@ -1,10 +1,10 @@
 import './App.css';
-import MarsGISDashboard from './components/MarsGISDashboard';
+import MarsScientificGUI from './components/MarsScientificGUI';
 
 function App() {
   return (
     <div className="App">
-      <MarsGISDashboard />
+      <MarsScientificGUI />
     </div>
   );
 }
