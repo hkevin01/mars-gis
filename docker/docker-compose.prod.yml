@@ -1,9 +1,0 @@
-# MARS-GIS Production - MOVED
-# New location: docker/compose/docker-compose.prod.yml
-# Use: ./docker/docker-helper.sh prod
-
-version: "3.8"
-services:
-  redirect:
-    image: alpine:latest
-    command: echo "Use ./docker/docker-helper.sh prod"

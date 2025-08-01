@@ -1,9 +1,0 @@
-# MARS-GIS Override - MOVED
-# New location: docker/compose/docker-compose.override.yml
-# Use: cd docker/compose && docker-compose up -d
-
-version: "3.8"
-services:
-  redirect:
-    image: alpine:latest
-    command: echo "Use cd docker/compose && docker-compose up -d"

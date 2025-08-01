@@ -1,0 +1,48 @@
+# MARS-GIS Docker Compose
+#
+# This file redirects to the organized Docker Compose configuration
+# The actual compose files have been moved to docker/compose/
+#
+# Available configurations:
+# - docker/compose/docker-compose.yml (main development)
+# - docker/compose/docker-compose.override.yml (development overrides)
+# - docker/compose/docker-compose.prod.yml (production)
+# - docker/compose/docker-compose.test.yml (testing)
+#
+# Quick start:
+# cd docker/compose && docker-compose up
+#
+# Or use the helper script:
+# ./docker/docker-helper.sh dev|prod|test
+
+version: "3.8"
+
+services:
+  mars-gis-info:
+    image: alpine:latest
+    container_name: mars-gis-redirect
+    command: |
+      sh -c "
+        echo '=================================================================='
+        echo '🚀 MARS-GIS: Mars Geospatial Intelligence System'
+        echo '=================================================================='
+        echo ''
+        echo 'Docker Compose files have been organized!'
+        echo ''
+        echo 'Please use one of:'
+        echo '  1. ./docker/docker-helper.sh dev'
+        echo '  2. cd docker/compose && docker-compose up'
+        echo ''
+        echo 'Available environments:'
+        echo '  - Development: docker/compose/docker-compose.yml'
+        echo '  - Production:  docker/compose/docker-compose.prod.yml'
+        echo '  - Testing:     docker/compose/docker-compose.test.yml'
+        echo ''
+        echo '=================================================================='
+        sleep 5
+      "
+    restart: "no"
+
+networks:
+  default:
+    name: mars-gis-info
