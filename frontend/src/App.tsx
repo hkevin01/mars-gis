@@ -1,12 +1,8 @@
 import './App.css';
-import MarsScientificGUI from './components/MarsScientificGUI';
+import OpenLayersMarsMapper from './features/mars-mapping/components/OpenLayersMarsMapper';
 
 function App() {
-  return (
-    <div className="App">
-      <MarsScientificGUI />
-    </div>
-  );
+  return <OpenLayersMarsMapper />;
 }
 
 export default App;

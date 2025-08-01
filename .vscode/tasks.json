@@ -99,6 +99,23 @@
         "reveal": "always",
         "panel": "new"
       }
+    },
+    {
+      "label": "start-frontend",
+      "type": "shell",
+      "command": "npm",
+      "args": ["start"],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "group": "build",
+      "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
     }
   ]
 }

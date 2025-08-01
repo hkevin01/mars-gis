@@ -165,8 +165,8 @@ class ApiClient {
     attempt: number = 1
   ): Promise<ApiResponse<T>> {
     const fullUrl = `${this.baseURL}${url}`;
-    
-    const defaultHeaders = {
+
+    const defaultHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
@@ -220,20 +220,22 @@ class ApiClient {
       }
 
       // Handle different error types
-      if (error.name === 'AbortError') {
-        throw {
-          message: 'Request timeout',
-          code: 'TIMEOUT',
-          status: 408,
-        } as ApiError;
-      }
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw {
+            message: 'Request timeout',
+            code: 'TIMEOUT',
+            status: 408,
+          } as ApiError;
+        }
 
-      if (error.message === 'Failed to fetch') {
-        throw {
-          message: 'Network error - please check your connection',
-          code: 'NETWORK_ERROR',
-          status: 0,
-        } as ApiError;
+        if (error.message === 'Failed to fetch') {
+          throw {
+            message: 'Network error - please check your connection',
+            code: 'NETWORK_ERROR',
+            status: 0,
+          } as ApiError;
+        }
       }
 
       throw error;
@@ -301,7 +303,7 @@ export const missionService = {
     if (params?.asset) searchParams.append('asset', params.asset);
     if (params?.page) searchParams.append('page', params.page.toString());
     if (params?.pageSize) searchParams.append('page_size', params.pageSize.toString());
-    
+
     const url = `/missions${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
     const response = await apiClient.get<PaginatedResponse<Mission>>(url);
     return response.data;
@@ -384,7 +386,7 @@ export const analysisService = {
     if (params?.region) searchParams.append('region', params.region);
     if (params?.page) searchParams.append('page', params.page.toString());
     if (params?.pageSize) searchParams.append('page_size', params.pageSize.toString());
-    
+
     const url = `/analysis/results${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
     const response = await apiClient.get<PaginatedResponse<AnalysisResult>>(url);
     return response.data;
@@ -433,7 +435,7 @@ export const dataService = {
     if (params?.endDate) searchParams.append('end_date', params.endDate);
     if (params?.region) searchParams.append('region', params.region);
     if (params?.limit) searchParams.append('limit', params.limit.toString());
-    
+
     const url = `/data/atmospheric${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
     const response = await apiClient.get<AtmosphericData[]>(url);
     return response.data;
@@ -448,7 +450,7 @@ export const dataService = {
     if (params?.sampleType) searchParams.append('sample_type', params.sampleType);
     if (params?.region) searchParams.append('region', params.region);
     if (params?.limit) searchParams.append('limit', params.limit.toString());
-    
+
     const url = `/data/geological${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
     const response = await apiClient.get<GeologicalData[]>(url);
     return response.data;
@@ -465,7 +467,7 @@ export const dataService = {
     if (params?.classification) searchParams.append('classification', params.classification);
     if (params?.hazardLevel) searchParams.append('hazard_level', params.hazardLevel);
     if (params?.limit) searchParams.append('limit', params.limit.toString());
-    
+
     const url = `/data/terrain${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
     const response = await apiClient.get<TerrainData[]>(url);
     return response.data;
@@ -517,7 +519,7 @@ export const systemService = {
     if (params?.level) searchParams.append('level', params.level);
     if (params?.limit) searchParams.append('limit', params.limit.toString());
     if (params?.since) searchParams.append('since', params.since);
-    
+
     const url = `/system/logs${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
     const response = await apiClient.get(url);
     return response.data;
@@ -534,15 +536,15 @@ export class WebSocketService {
 
   connect(): void {
     const wsUrl = API_CONFIG.BASE_URL.replace('http', 'ws') + '/ws';
-    
+
     try {
       this.ws = new WebSocket(wsUrl);
-      
+
       this.ws.onopen = () => {
         console.log('WebSocket connected');
         this.reconnectAttempts = 0;
       };
-      
+
       this.ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
@@ -551,12 +553,12 @@ export class WebSocketService {
           console.error('Failed to parse WebSocket message:', error);
         }
       };
-      
+
       this.ws.onclose = () => {
         console.log('WebSocket disconnected');
         this.reconnect();
       };
-      
+
       this.ws.onerror = (error) => {
         console.error('WebSocket error:', error);
       };

@@ -1,0 +1,93 @@
+/* App.css - Main application styles */
+
+.App {
+  text-align: center;
+  min-height: 100vh;
+  background-color: #0f0f23;
+  color: white;
+}
+
+/* Global Mars theme styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #0f0f23;
+  color: #e5e7eb;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Mars theme colors */
+:root {
+  --mars-red: #c44536;
+  --mars-orange: #d16855;
+  --mars-dark-red: #8f3026;
+  --space-blue: #2196f3;
+  --space-dark: #0f0f23;
+  --space-gray: #1e1e2e;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--space-gray);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mars-red);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mars-orange);
+}
+
+/* Loading animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Mars Scientific GUI container */
+.mars-scientific-gui {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .App {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .App {
+    font-size: 12px;
+  }
+}
