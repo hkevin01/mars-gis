@@ -28,14 +28,14 @@ import { formatCoordinates, getLocationColor, searchMarsLocations } from '../../
 
 // NASA Mars data endpoints
 const NASA_MARS_APIS = {
-  // NASA Mars Trek API for imagery
-  imagery: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_MGS_MOLA_DEM_mosaic_global_463m/{z}/{x}/{y}.png',
-  // USGS Mars imagery service
-  usgs: 'https://astrowebmaps.wr.usgs.gov/webmapatlas/Layers/Mars/{z}/{x}/{y}.png',
+  // USGS Astrogeology Mars Global Color Mosaic
+  imagery: 'https://astrowebmaps.wr.usgs.gov/webmapatlas/Layers/Mars/Mars_Viking_ClrMosaic_global_925m/{z}/{x}/{y}.png',
+  // USGS Mars MOLA elevation service
+  usgs: 'https://astrowebmaps.wr.usgs.gov/webmapatlas/Layers/Mars/Mars_MGS_MOLA_ClrShade_merge_global_463m/{z}/{x}/{y}.png',
   // Mars Global Surveyor MOLA elevation data
-  elevation: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_MGS_MOLA_ClrShade_merge_global_463m/{z}/{x}/{y}.png',
-  // Thermal Emission Imaging System (THEMIS)
-  thermal: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_MGS_TES_Thermal_Inertia_mosaic_global_7410m/{z}/{x}/{y}.png'
+  elevation: 'https://astrowebmaps.wr.usgs.gov/webmapatlas/Layers/Mars/Mars_MGS_MOLA_Shade_global_463m/{z}/{x}/{y}.png',
+  // Alternative OpenStreetMap as fallback
+  fallback: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 };
 
 // Mars projection configuration
@@ -66,11 +66,19 @@ const OpenLayersMarsMapper: React.FC = () => {
   const [layers, setLayers] = useState<LayerConfig[]>([
     {
       id: 'imagery',
-      name: 'Mars Imagery',
-      description: 'NASA Mars Trek high-resolution imagery',
+      name: 'Mars Color Mosaic',
+      description: 'USGS Mars Viking Color Mosaic - Global View',
       url: NASA_MARS_APIS.imagery,
       visible: true,
       opacity: 1.0
+    },
+    {
+      id: 'usgs',
+      name: 'MOLA Shaded Relief',
+      description: 'Mars Global Surveyor MOLA Shaded Relief',
+      url: NASA_MARS_APIS.usgs,
+      visible: false,
+      opacity: 0.8
     },
     {
       id: 'elevation',
@@ -81,10 +89,10 @@ const OpenLayersMarsMapper: React.FC = () => {
       opacity: 0.7
     },
     {
-      id: 'thermal',
-      name: 'Thermal Data',
-      description: 'Thermal Emission Imaging System data',
-      url: NASA_MARS_APIS.thermal,
+      id: 'fallback',
+      name: 'Earth Reference',
+      description: 'OpenStreetMap for reference and fallback',
+      url: NASA_MARS_APIS.fallback,
       visible: false,
       opacity: 0.6
     }
@@ -103,19 +111,33 @@ const OpenLayersMarsMapper: React.FC = () => {
   const initializeMap = useCallback(() => {
     if (!mapRef.current) return;
 
-    // Create base layers
-    const baseLayers = layers.map(layerConfig =>
-      new TileLayer({
-        source: new XYZ({
-          url: layerConfig.url,
-          projection: MARS_PROJECTION,
-          crossOrigin: 'anonymous'
-        }),
+    // Create base layers with error handling
+    const baseLayers = layers.map(layerConfig => {
+      const source = new XYZ({
+        url: layerConfig.url,
+        projection: MARS_PROJECTION,
+        crossOrigin: 'anonymous',
+        maxZoom: 10
+      });
+
+      // Add error handling for tile loading
+      source.on('tileloaderror', () => {
+        // Tile failed to load - this is expected for some Mars tile services
+        setMapLoading(false);
+      });
+
+      source.on('tileloadend', () => {
+        // Tile loaded successfully
+        setMapLoading(false);
+      });
+
+      return new TileLayer({
+        source,
         visible: layerConfig.visible,
         opacity: layerConfig.opacity,
         properties: { id: layerConfig.id }
-      })
-    );
+      });
+    });
 
     // Create markers layer for Mars locations
     const markersSource = new VectorSource();
@@ -342,9 +364,9 @@ const OpenLayersMarsMapper: React.FC = () => {
       {/* OpenLayers Map Container */}
       <div
         ref={mapRef}
-        className="w-full h-full"
+        className="w-full h-full mars-background"
         style={{
-          background: 'linear-gradient(to bottom, #0a0a0a, #1a1a1a)',
+          background: 'linear-gradient(135deg, #8B4513 0%, #CD853F 25%, #A0522D 50%, #654321 75%, #2F1B14 100%)',
         }}
       />
 
@@ -556,7 +578,7 @@ const OpenLayersMarsMapper: React.FC = () => {
                     onChange={(e) => setShowLayerPanel(e.target.checked)}
                     className="mr-2 rounded"
                   />
-                  Show Layer Panel
+                  {' '}Show Layer Panel
                 </label>
               </div>
               <div className="text-xs text-gray-400">

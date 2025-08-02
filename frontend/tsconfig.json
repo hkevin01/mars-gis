@@ -22,5 +22,11 @@
   },
   "include": [
     "src"
+  ],
+  "exclude": [
+    "src/archived",
+    "src/archived/**/*",
+    "src/components/GoogleEarthMarsMapper.tsx",
+    "node_modules"
   ]
 }

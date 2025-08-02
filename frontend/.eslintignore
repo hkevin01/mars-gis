@@ -1,0 +1,18 @@
+# Exclude archived/legacy components from linting
+src/archived/
+src/archived/**/*
+src/components/GoogleEarthMarsMapper.tsx
+
+# Exclude build outputs
+build/
+dist/
+node_modules/
+
+# Exclude test files that don't need strict linting
+**/*.test.js
+**/*.test.ts
+**/*.spec.js
+**/*.spec.ts
+
+# Exclude generated files
+src/react-app-env.d.ts
