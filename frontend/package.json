@@ -4,6 +4,10 @@
   "description": "Mars GIS Web Interface - Professional geospatial analysis platform for Mars exploration",
   "private": true,
   "homepage": ".",
+  "resolutions": {
+    "three": "0.179.1",
+    "@types/three": "0.178.1"
+  },
   "dependencies": {
     "@tailwindcss/forms": "^0.5.3",
     "@types/ol": "^7.0.0",

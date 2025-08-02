@@ -6,6 +6,7 @@
       "dom.iterable",
       "es6"
     ],
+    "types": ["three"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
