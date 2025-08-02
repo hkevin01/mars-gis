@@ -1,16 +1,17 @@
 // Enhanced 3D Mars Globe with Three.js Integration
-import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
-  Play,
-  Pause,
-  RotateCcw,
-  Settings,
-  Navigation,
-  Sun,
-  Moon
-} from 'lucide-react';// Three.js imports
+    Moon,
+    Navigation,
+    Pause,
+    Play,
+    RotateCcw,
+    Settings,
+    Sun
+} from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+
+// Three.js imports
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 // Mars-specific constants
 const MARS_RADIUS = 3389.5; // km
@@ -52,7 +53,7 @@ const Mars3DGlobe: React.FC<Mars3DGlobeProps> = ({
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const controlsRef = useRef<OrbitControls | null>(null);
+  const controlsRef = useRef<any>(null);
   const marsRef = useRef<THREE.Mesh | null>(null);
   const atmosphereRef = useRef<THREE.Mesh | null>(null);
   const animationRef = useRef<number | null>(null);
@@ -114,17 +115,72 @@ const Mars3DGlobe: React.FC<Mars3DGlobeProps> = ({
     renderer.toneMappingExposure = 1.2;
     rendererRef.current = renderer;
 
-    // Controls setup
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.enableZoom = true;
-    controls.enablePan = false;
-    controls.minDistance = MARS_RADIUS * 1.2;
-    controls.maxDistance = MARS_RADIUS * 8;
-    controls.autoRotate = isRotating;
-    controls.autoRotateSpeed = 0.5;
-    controlsRef.current = controls;
+    // Basic mouse controls setup
+    let isMouseDown = false;
+    let mouseX = 0;
+    let mouseY = 0;
+    let targetRotationX = 0;
+    let targetRotationY = 0;
+
+    const handleMouseDown = (event: MouseEvent) => {
+      isMouseDown = true;
+      mouseX = event.clientX;
+      mouseY = event.clientY;
+    };
+
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!isMouseDown) return;
+
+      const deltaX = event.clientX - mouseX;
+      const deltaY = event.clientY - mouseY;
+
+      targetRotationX += deltaY * 0.01;
+      targetRotationY += deltaX * 0.01;
+
+      // Constrain vertical rotation
+      targetRotationX = Math.max(-Math.PI/2, Math.min(Math.PI/2, targetRotationX));
+
+      // Apply rotation to camera
+      const radius = camera.position.length();
+      camera.position.x = radius * Math.sin(targetRotationY) * Math.cos(targetRotationX);
+      camera.position.y = radius * Math.sin(targetRotationX);
+      camera.position.z = radius * Math.cos(targetRotationY) * Math.cos(targetRotationX);
+      camera.lookAt(0, 0, 0);
+
+      mouseX = event.clientX;
+      mouseY = event.clientY;
+    };
+
+    const handleMouseUp = () => {
+      isMouseDown = false;
+    };
+
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const scale = event.deltaY > 0 ? 1.1 : 0.9;
+      camera.position.multiplyScalar(scale);
+
+      // Constrain zoom
+      const distance = camera.position.length();
+      if (distance < MARS_RADIUS * 1.2) camera.position.normalize().multiplyScalar(MARS_RADIUS * 1.2);
+      if (distance > MARS_RADIUS * 8) camera.position.normalize().multiplyScalar(MARS_RADIUS * 8);
+    };
+
+    // Add event listeners
+    renderer.domElement.addEventListener('mousedown', handleMouseDown);
+    renderer.domElement.addEventListener('mousemove', handleMouseMove);
+    renderer.domElement.addEventListener('mouseup', handleMouseUp);
+    renderer.domElement.addEventListener('wheel', handleWheel);
+
+    // Store controls reference for cleanup
+    controlsRef.current = {
+      dispose: () => {
+        renderer.domElement.removeEventListener('mousedown', handleMouseDown);
+        renderer.domElement.removeEventListener('mousemove', handleMouseMove);
+        renderer.domElement.removeEventListener('mouseup', handleMouseUp);
+        renderer.domElement.removeEventListener('wheel', handleWheel);
+      }
+    };
 
     // Add click handler for location selection
     const raycaster = new THREE.Raycaster();
@@ -154,7 +210,7 @@ const Mars3DGlobe: React.FC<Mars3DGlobeProps> = ({
     return () => {
       renderer.domElement.removeEventListener('click', handleClick);
     };
-  }, [width, height, isRotating, onLocationClick]);
+  }, [width, height, onLocationClick]);
 
   // Create Mars atmosphere
   const createAtmosphere = useCallback(() => {
@@ -318,10 +374,9 @@ const Mars3DGlobe: React.FC<Mars3DGlobeProps> = ({
   const animate = useCallback(() => {
     if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
 
-    // Update controls
-    if (controlsRef.current) {
-      controlsRef.current.autoRotate = isRotating;
-      controlsRef.current.update();
+    // Auto-rotation when enabled
+    if (isRotating && marsRef.current) {
+      marsRef.current.rotation.y += 0.005;
     }
 
     // Update atmosphere animation

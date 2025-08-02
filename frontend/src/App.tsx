@@ -1,8 +1,8 @@
 import './App.css';
-import OpenLayersMarsMapper from './features/mars-mapping/components/OpenLayersMarsMapper';
+import IntegratedMarsExplorer from './components/IntegratedMarsExplorer';
 
 function App() {
-  return <OpenLayersMarsMapper />;
+  return <IntegratedMarsExplorer initialView="2d" />;
 }
 
 export default App;
