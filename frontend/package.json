@@ -16,7 +16,7 @@
     "lucide-react": "^0.263.1",
     "ol": "^8.2.0",
     "postcss": "^8.4.24",
-    "proj4": "^2.9.2",
+    "proj4": "^2.19.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.8.0",

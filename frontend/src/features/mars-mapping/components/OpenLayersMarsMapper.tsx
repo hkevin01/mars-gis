@@ -17,8 +17,11 @@ import { Point } from 'ol/geom';
 import { defaults as defaultInteractions, DragRotateAndZoom } from 'ol/interaction';
 import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
 import 'ol/ol.css';
+import { Projection } from 'ol/proj';
+import { register } from 'ol/proj/proj4';
 import { Vector as VectorSource, XYZ } from 'ol/source';
 import { Circle, Fill, Stroke, Style, Text } from 'ol/style';
+import proj4 from 'proj4';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 // Import shared modules
@@ -26,20 +29,36 @@ import { MARS_LOCATIONS } from '../../../shared/constants/mars-data';
 import type { BookmarkType, MarsLocation, ViewState } from '../../../shared/types/mars-types';
 import { formatCoordinates, getLocationColor, searchMarsLocations } from '../../../shared/utils/mars-utils';
 
-// NASA Mars data endpoints
-const NASA_MARS_APIS = {
-  // USGS Astrogeology Mars Global Color Mosaic
-  imagery: 'https://astrowebmaps.wr.usgs.gov/webmapatlas/Layers/Mars/Mars_Viking_ClrMosaic_global_925m/{z}/{x}/{y}.png',
-  // USGS Mars MOLA elevation service
-  usgs: 'https://astrowebmaps.wr.usgs.gov/webmapatlas/Layers/Mars/Mars_MGS_MOLA_ClrShade_merge_global_463m/{z}/{x}/{y}.png',
-  // Mars Global Surveyor MOLA elevation data
-  elevation: 'https://astrowebmaps.wr.usgs.gov/webmapatlas/Layers/Mars/Mars_MGS_MOLA_Shade_global_463m/{z}/{x}/{y}.png',
-  // Alternative OpenStreetMap as fallback
-  fallback: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+// Register Mars coordinate system
+proj4.defs('IAU2000:49900', '+proj=longlat +a=3396190 +b=3376200 +no_defs');
+register(proj4);
+
+// High-Definition NASA Mars data endpoints
+const NASA_MARS_HD_APIS = {
+  // NASA Mars Trek - High Definition Global Mosaic
+  globalHD: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_MGS_MOLA_DEM_mosaic_global_463m/{z}/{x}/{y}.png',
+  // NASA Mars Trek - Viking Color Mosaic (High Quality)
+  vikingColor: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/{z}/{x}/{y}.png',
+  // MRO Context Camera Mosaic (Ultra High Resolution)
+  ctxMosaic: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_MRO_CTX_mosaic_global_232m/{z}/{x}/{y}.png',
+  // MOLA Shaded Relief for Topography
+  molaShade: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_MGS_MOLA_Shade_global_463m/{z}/{x}/{y}.png',
+  // THEMIS Thermal Infrared Mosaic
+  themis: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_ODY_THEMIS_IR_Mosaic_global_100m/{z}/{x}/{y}.png',
+  // HiRISE Ultra High Resolution (for detailed areas)
+  hirise: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_MRO_HiRISE_LS_global/{z}/{x}/{y}.png',
+  // Fallback - USGS Astrogeology
+  fallback: 'https://astrowebmaps.wr.usgs.gov/webmapatlas/Layers/Mars/Mars_Viking_ClrMosaic_global_925m/{z}/{x}/{y}.png'
 };
 
-// Mars projection configuration
-const MARS_PROJECTION = 'EPSG:4326'; // Geographic coordinate system for Mars
+// Mars projection configuration with proper Mars coordinate system
+const MARS_PROJECTION = new Projection({
+  code: 'IAU2000:49900',
+  extent: [-180, -90, 180, 90],
+  worldExtent: [-180, -90, 180, 90],
+  units: 'degrees'
+});
+
 const MARS_EXTENT = [-180, -90, 180, 90]; // Mars coordinate bounds
 
 interface LayerConfig {
@@ -49,6 +68,8 @@ interface LayerConfig {
   url: string;
   visible: boolean;
   opacity: number;
+  minZoom?: number;
+  maxZoom?: number;
 }
 
 const OpenLayersMarsMapper: React.FC = () => {
@@ -65,36 +86,65 @@ const OpenLayersMarsMapper: React.FC = () => {
 
   const [layers, setLayers] = useState<LayerConfig[]>([
     {
-      id: 'imagery',
-      name: 'Mars Color Mosaic',
-      description: 'USGS Mars Viking Color Mosaic - Global View',
-      url: NASA_MARS_APIS.imagery,
+      id: 'globalHD',
+      name: 'Mars Global HD',
+      description: 'NASA Mars Trek - Global High Definition Mosaic',
+      url: NASA_MARS_HD_APIS.globalHD,
       visible: true,
-      opacity: 1.0
+      opacity: 1.0,
+      maxZoom: 8
     },
     {
-      id: 'usgs',
-      name: 'MOLA Shaded Relief',
-      description: 'Mars Global Surveyor MOLA Shaded Relief',
-      url: NASA_MARS_APIS.usgs,
+      id: 'vikingColor',
+      name: 'Viking Color Mosaic',
+      description: 'Mars Viking MDIM21 Color Mosaic - High Quality',
+      url: NASA_MARS_HD_APIS.vikingColor,
       visible: false,
-      opacity: 0.8
+      opacity: 0.9,
+      maxZoom: 12
     },
     {
-      id: 'elevation',
-      name: 'MOLA Elevation',
-      description: 'Mars Global Surveyor MOLA elevation data',
-      url: NASA_MARS_APIS.elevation,
+      id: 'ctxMosaic',
+      name: 'CTX Ultra HD',
+      description: 'MRO Context Camera Mosaic - Ultra High Resolution',
+      url: NASA_MARS_HD_APIS.ctxMosaic,
+      visible: false,
+      opacity: 0.8,
+      minZoom: 8,
+      maxZoom: 16
+    },
+    {
+      id: 'molaShade',
+      name: 'MOLA Topography',
+      description: 'Mars Global Surveyor MOLA Shaded Relief',
+      url: NASA_MARS_HD_APIS.molaShade,
       visible: false,
       opacity: 0.7
     },
     {
-      id: 'fallback',
-      name: 'Earth Reference',
-      description: 'OpenStreetMap for reference and fallback',
-      url: NASA_MARS_APIS.fallback,
+      id: 'themis',
+      name: 'THEMIS Thermal',
+      description: 'THEMIS Thermal Infrared Mosaic',
+      url: NASA_MARS_HD_APIS.themis,
       visible: false,
       opacity: 0.6
+    },
+    {
+      id: 'hirise',
+      name: 'HiRISE Ultra Detail',
+      description: 'HiRISE Ultra High Resolution for Detailed Areas',
+      url: NASA_MARS_HD_APIS.hirise,
+      visible: false,
+      opacity: 0.9,
+      minZoom: 15
+    },
+    {
+      id: 'fallback',
+      name: 'Fallback Layer',
+      description: 'USGS Astrogeology Fallback',
+      url: NASA_MARS_HD_APIS.fallback,
+      visible: false,
+      opacity: 0.8
     }
   ]);
 
@@ -107,27 +157,30 @@ const OpenLayersMarsMapper: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [mapLoading, setMapLoading] = useState(true);
 
-  // Initialize OpenLayers map
+  // Initialize OpenLayers map with HD Mars terrain
   const initializeMap = useCallback(() => {
     if (!mapRef.current) return;
 
-    // Create base layers with error handling
+    // Create enhanced base layers with proper zoom levels and Mars projection
     const baseLayers = layers.map(layerConfig => {
       const source = new XYZ({
         url: layerConfig.url,
         projection: MARS_PROJECTION,
         crossOrigin: 'anonymous',
-        maxZoom: 10
+        maxZoom: layerConfig.maxZoom || 18,
+        minZoom: layerConfig.minZoom || 0
       });
 
-      // Add error handling for tile loading
+      // Enhanced error handling for tile loading
+      source.on('tileloadstart', () => {
+        setMapLoading(true);
+      });
+
       source.on('tileloaderror', () => {
-        // Tile failed to load - this is expected for some Mars tile services
         setMapLoading(false);
       });
 
       source.on('tileloadend', () => {
-        // Tile loaded successfully
         setMapLoading(false);
       });
 
@@ -135,6 +188,8 @@ const OpenLayersMarsMapper: React.FC = () => {
         source,
         visible: layerConfig.visible,
         opacity: layerConfig.opacity,
+        minZoom: layerConfig.minZoom,
+        maxZoom: layerConfig.maxZoom,
         properties: { id: layerConfig.id }
       });
     });
@@ -178,7 +233,7 @@ const OpenLayersMarsMapper: React.FC = () => {
       markersSource.addFeature(feature);
     });
 
-    // Create map
+    // Create enhanced Mars map with proper projection and HD zoom levels
     const map = new Map({
       target: mapRef.current,
       layers: [...baseLayers, markersLayer],
@@ -188,7 +243,10 @@ const OpenLayersMarsMapper: React.FC = () => {
         zoom: viewState.zoom,
         extent: MARS_EXTENT,
         minZoom: 1,
-        maxZoom: 12
+        maxZoom: 20,  // Increased for HD viewing
+        constrainResolution: true,
+        smoothResolutionConstraint: true,
+        enableRotation: true
       }),
       interactions: defaultInteractions().extend([
         new DragRotateAndZoom()
