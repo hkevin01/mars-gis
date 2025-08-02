@@ -1,36 +1,37 @@
 // Professional OpenLayers Mars Mapper with NASA Data Integration
 import {
-    Activity,
-    Bookmark,
-    ChevronDown,
-    ChevronUp,
-    Compass,
-    Download,
-    Eye,
-    EyeOff,
-    Home,
-    Info,
-    Layers,
-    MapPin,
-    Maximize,
-    Minimize,
-    MousePointer,
-    RotateCcw,
-    Ruler,
-    Search,
-    Settings,
-    ZoomIn,
-    ZoomOut,
+  Activity,
+  Bookmark,
+  ChevronDown,
+  ChevronUp,
+  Compass,
+  Download,
+  Eye,
+  EyeOff,
+  Home,
+  Info,
+  Layers,
+  MapPin,
+  Maximize,
+  Minimize,
+  MousePointer,
+  RotateCcw,
+  Ruler,
+  Search,
+  Settings,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
 import { Feature, Map, View } from 'ol';
-import { Point } from 'ol/geom';
-import { defaults as defaultInteractions, DragRotateAndZoom } from 'ol/interaction';
+import { LineString, Point } from 'ol/geom';
+import { defaults as defaultInteractions, DragRotateAndZoom, Draw } from 'ol/interaction';
 import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
 import 'ol/ol.css';
 import { Projection } from 'ol/proj';
 import { register } from 'ol/proj/proj4';
 import { Vector as VectorSource, XYZ } from 'ol/source';
 import { Circle, Fill, Stroke, Style, Text } from 'ol/style';
+import { getLength } from 'ol/sphere';
 import proj4 from 'proj4';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -86,6 +87,8 @@ const OpenLayersMarsMapper: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const olMapRef = useRef<Map | null>(null);
   const markersLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
+  const measurementLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
+  const drawInteractionRef = useRef<Draw | null>(null);
 
   const [viewState, setViewState] = useState<ViewState>({
     centerLat: 0,
@@ -168,7 +171,8 @@ const OpenLayersMarsMapper: React.FC = () => {
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [mapLoading, setMapLoading] = useState(true);
-  
+  const [marsLayerPreloaded, setMarsLayerPreloaded] = useState(false);
+
   // New state for enhanced OpenLayers features
   const [isLayerPanelExpanded, setIsLayerPanelExpanded] = useState(false);
   const [showMeasurementTool, setShowMeasurementTool] = useState(false);
@@ -180,6 +184,49 @@ const OpenLayersMarsMapper: React.FC = () => {
   const initializeMap = useCallback(() => {
     if (!mapRef.current) return;
 
+    // Preload primary Mars layer for faster initial display
+    const primaryMarsLayer = layers.find(layer => layer.id === 'vikingColor');
+    if (primaryMarsLayer && !marsLayerPreloaded) {
+      // Trigger preloading of essential global view tiles (zoom levels 1-2)
+      const preloadTiles = [
+        // Zoom level 1: Global view (4 tiles)
+        ...Array.from({length: 2}, (_, x) =>
+          Array.from({length: 2}, (_, y) => ({z: 1, x, y}))
+        ).flat(),
+        // Zoom level 2: Hemispheric view (16 tiles)
+        ...Array.from({length: 4}, (_, x) =>
+          Array.from({length: 4}, (_, y) => ({z: 2, x, y}))
+        ).flat()
+      ];
+
+      let tilesLoaded = 0;
+      const totalTiles = preloadTiles.length;
+
+      preloadTiles.forEach(({z, x, y}) => {
+        const url = primaryMarsLayer.url
+          .replace('{z}', z.toString())
+          .replace('{x}', x.toString())
+          .replace('{y}', y.toString());
+
+        // Preload tile silently with completion tracking
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          tilesLoaded++;
+          if (tilesLoaded >= totalTiles) {
+            setMarsLayerPreloaded(true);
+          }
+        };
+        img.onerror = () => {
+          tilesLoaded++;
+          if (tilesLoaded >= totalTiles) {
+            setMarsLayerPreloaded(true);
+          }
+        };
+        img.src = url;
+      });
+    }
+
     // Create enhanced base layers with proper zoom levels and Mars projection
     const baseLayers = layers.map(layerConfig => {
       const source = new XYZ({
@@ -188,19 +235,6 @@ const OpenLayersMarsMapper: React.FC = () => {
         crossOrigin: 'anonymous',
         maxZoom: layerConfig.maxZoom || 18,
         minZoom: layerConfig.minZoom || 0
-      });
-
-      // Enhanced error handling for tile loading
-      source.on('tileloadstart', () => {
-        setMapLoading(true);
-      });
-
-      source.on('tileloaderror', () => {
-        setMapLoading(false);
-      });
-
-      source.on('tileloadend', () => {
-        setMapLoading(false);
       });
 
       return new TileLayer({
@@ -324,7 +358,7 @@ const OpenLayersMarsMapper: React.FC = () => {
     return () => {
       map.setTarget();
     };
-  }, [layers, viewState.centerLat, viewState.centerLon, viewState.zoom]);
+  }, [layers, viewState.centerLat, viewState.centerLon, viewState.zoom, marsLayerPreloaded]);
 
   // Update layer visibility and opacity
   const updateLayer = useCallback((layerId: string, updates: Partial<LayerConfig>) => {
@@ -459,22 +493,80 @@ const OpenLayersMarsMapper: React.FC = () => {
 
   return (
     <div className="w-full h-screen bg-black relative overflow-hidden">
-      {/* OpenLayers Map Container */}
+      {/* CSS Styles for Mars background effects */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes marsAtmosphere {
+            0% { background-position: 0% 0%, 100% 100%, 0% 0%; }
+            50% { background-position: 20% 20%, 80% 80%, 0% 0%; }
+            100% { background-position: 40% 40%, 60% 60%, 0% 0%; }
+          }
+
+          .mars-background-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+              radial-gradient(circle at 20% 80%, rgba(139, 69, 19, 0.1) 0%, transparent 60%),
+              radial-gradient(circle at 80% 20%, rgba(165, 42, 42, 0.1) 0%, transparent 60%),
+              radial-gradient(circle at 40% 40%, rgba(101, 67, 33, 0.1) 0%, transparent 80%);
+            pointer-events: none;
+            z-index: 1;
+          }
+
+          .ol-viewport {
+            background: transparent !important;
+          }
+
+          .ol-layer {
+            transition: opacity 0.3s ease-in-out;
+          }
+        `
+      }} />
+
+      {/* OpenLayers Map Container with Mars-like background */}
       <div
         ref={mapRef}
-        className="w-full h-full mars-background"
+        className="w-full h-full mars-background-container transition-opacity duration-500 ease-in-out"
         style={{
-          background: 'linear-gradient(135deg, #8B4513 0%, #CD853F 25%, #A0522D 50%, #654321 75%, #2F1B14 100%)',
+          background: `
+            radial-gradient(ellipse at 30% 30%, rgba(205, 133, 63, 0.3) 0%, transparent 50%),
+            radial-gradient(ellipse at 70% 70%, rgba(160, 82, 45, 0.2) 0%, transparent 50%),
+            linear-gradient(135deg,
+              #1a0f0a 0%,
+              #2d1810 15%,
+              #3d2317 30%,
+              #4a2c1a 45%,
+              #5c3520 60%,
+              #6b3d24 75%,
+              #7a4428 90%,
+              #8b4a2d 100%
+            )
+          `,
+          backgroundSize: '400% 400%, 300% 300%, 100% 100%',
+          backgroundPosition: '0% 0%, 100% 100%, 0% 0%',
+          animation: 'marsAtmosphere 20s ease-in-out infinite alternate'
         }}
       />
 
-      {/* Loading Overlay */}
+      {/* Smooth Loading Overlay with Mars theme */}
       {mapLoading && (
-        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
+        <div className="absolute inset-0 bg-gradient-to-br from-black/90 via-red-900/20 to-black/90 flex items-center justify-center z-50 transition-opacity duration-500">
           <div className="text-white text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <div className="text-lg font-semibold">Loading Mars Data...</div>
-            <div className="text-sm text-gray-400">Connecting to NASA servers</div>
+            <div className="relative mb-6">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-800/30 border-t-red-500 mx-auto"></div>
+              <div className="absolute inset-2 animate-pulse rounded-full bg-gradient-to-r from-red-600/20 to-orange-500/20"></div>
+            </div>
+            <div className="text-lg font-semibold text-red-100 mb-2">Loading Mars Surface...</div>
+            <div className="text-sm text-red-300/80">
+              {marsLayerPreloaded ? 'Optimizing Mars surface tiles...' : 'Preloading Mars surface data...'}
+            </div>
+            <div className="w-64 bg-red-900/30 rounded-full h-1 mt-4 mx-auto overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-red-600 to-orange-500 rounded-full animate-pulse"></div>
+            </div>
           </div>
         </div>
       )}
@@ -533,7 +625,7 @@ const OpenLayersMarsMapper: React.FC = () => {
       <div className="absolute right-4 top-20 z-30">
         <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-700 shadow-lg">
           {/* Layer Panel Header */}
-          <button 
+          <button
             className="flex items-center justify-between p-3 w-full text-left hover:bg-gray-800/50 rounded-t-lg transition-colors"
             onClick={() => setIsLayerPanelExpanded(!isLayerPanelExpanded)}
           >
@@ -547,7 +639,7 @@ const OpenLayersMarsMapper: React.FC = () => {
               <ChevronDown className="w-4 h-4 text-gray-400" />
             )}
           </button>
-          
+
           {/* Expandable Layer Content */}
           {isLayerPanelExpanded && (
             <div className="p-4 pt-0 max-h-96 overflow-y-auto w-80">
@@ -868,8 +960,8 @@ const OpenLayersMarsMapper: React.FC = () => {
       <div className="absolute top-20 left-4 z-30">
         <div className="bg-gray-900/90 backdrop-blur-sm rounded-full p-3 border border-gray-700 shadow-lg">
           <div className="relative">
-            <Compass 
-              className="w-8 h-8 text-blue-400" 
+            <Compass
+              className="w-8 h-8 text-blue-400"
               style={{ transform: `rotate(${-viewState.rotation * 180 / Math.PI}deg)` }}
             />
             <div className="absolute inset-0 flex items-center justify-center">
