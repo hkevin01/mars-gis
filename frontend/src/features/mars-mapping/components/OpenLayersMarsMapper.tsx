@@ -31,7 +31,6 @@ import { Projection } from 'ol/proj';
 import { register } from 'ol/proj/proj4';
 import { Vector as VectorSource, XYZ } from 'ol/source';
 import { Circle, Fill, Stroke, Style, Text } from 'ol/style';
-import { getLength } from 'ol/sphere';
 import proj4 from 'proj4';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -71,6 +70,32 @@ const MARS_PROJECTION = new Projection({
 });
 
 const MARS_EXTENT = [-180, -90, 180, 90]; // Mars coordinate bounds
+
+// Mars-specific distance calculation using Haversine formula
+const calculateMarsDistance = (coord1: [number, number], coord2: [number, number]): number => {
+  const MARS_RADIUS = 3396190; // Mars radius in meters
+  const [lon1, lat1] = coord1;
+  const [lon2, lat2] = coord2;
+
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return MARS_RADIUS * c; // Distance in meters
+};
+
+// Format distance for display
+const formatDistance = (distance: number): string => {
+  if (distance < 1000) {
+    return `${Math.round(distance)} m`;
+  } else {
+    return `${(distance / 1000).toFixed(2)} km`;
+  }
+};
 
 interface LayerConfig {
   id: string;
@@ -179,6 +204,9 @@ const OpenLayersMarsMapper: React.FC = () => {
   const [showCoordinateInfo, setShowCoordinateInfo] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mouseCoordinates, setMouseCoordinates] = useState<{lat: number, lon: number} | null>(null);
+  const [measurementActive, setMeasurementActive] = useState(false);
+  const [currentMeasurement, setCurrentMeasurement] = useState<string>('');
+  const [measurementPoints, setMeasurementPoints] = useState<[number, number][]>([]);
 
   // Initialize OpenLayers map with HD Mars terrain
   const initializeMap = useCallback(() => {
@@ -277,6 +305,27 @@ const OpenLayersMarsMapper: React.FC = () => {
 
     markersLayerRef.current = markersLayer;
 
+    // Create measurement layer for distance measurements
+    const measurementSource = new VectorSource();
+    const measurementLayer = new VectorLayer({
+      source: measurementSource,
+      style: new Style({
+        stroke: new Stroke({
+          color: '#ff6b35',
+          width: 3,
+          lineDash: [10, 5]
+        }),
+        image: new Circle({
+          radius: 6,
+          fill: new Fill({ color: '#ff6b35' }),
+          stroke: new Stroke({ color: '#ffffff', width: 2 })
+        })
+      }),
+      zIndex: 1000
+    });
+
+    measurementLayerRef.current = measurementLayer;
+
     // Add Mars location features
     MARS_LOCATIONS.forEach(location => {
       const feature = new Feature({
@@ -289,7 +338,7 @@ const OpenLayersMarsMapper: React.FC = () => {
     // Create enhanced Mars map with proper projection and HD zoom levels
     const map = new Map({
       target: mapRef.current,
-      layers: [...baseLayers, markersLayer],
+      layers: [...baseLayers, markersLayer, measurementLayer],
       view: new View({
         projection: MARS_PROJECTION,
         center: [viewState.centerLon, viewState.centerLat],
@@ -482,11 +531,141 @@ const OpenLayersMarsMapper: React.FC = () => {
     URL.revokeObjectURL(url);
   }, [viewState, layers, bookmarks, selectedLocation]);
 
+  // Measurement tool functions
+  const startMeasurement = useCallback(() => {
+    if (!olMapRef.current || !measurementLayerRef.current) return;
+
+    setMeasurementActive(true);
+    setMeasurementPoints([]);
+    setCurrentMeasurement('');
+
+    // Clear previous measurements
+    measurementLayerRef.current.getSource()?.clear();
+
+    // Create draw interaction for line measurement
+    const drawInteraction = new Draw({
+      source: measurementLayerRef.current.getSource()!,
+      type: 'LineString',
+      style: new Style({
+        stroke: new Stroke({
+          color: '#ff6b35',
+          width: 3,
+          lineDash: [10, 5]
+        }),
+        image: new Circle({
+          radius: 6,
+          fill: new Fill({ color: '#ff6b35' }),
+          stroke: new Stroke({ color: '#ffffff', width: 2 })
+        })
+      })
+    });
+
+    drawInteraction.on('drawstart', () => {
+      setMeasurementPoints([]);
+      setCurrentMeasurement('Click to add measurement points...');
+    });
+
+    drawInteraction.on('drawend', (event) => {
+      const geometry = event.feature.getGeometry() as LineString;
+      const coordinates = geometry.getCoordinates();
+
+      if (coordinates.length >= 2) {
+        let totalDistance = 0;
+        const points: [number, number][] = [];
+
+        for (let i = 0; i < coordinates.length; i++) {
+          points.push([coordinates[i][0], coordinates[i][1]]);
+
+          if (i > 0) {
+            const segmentDistance = calculateMarsDistance(
+              [coordinates[i-1][0], coordinates[i-1][1]],
+              [coordinates[i][0], coordinates[i][1]]
+            );
+            totalDistance += segmentDistance;
+          }
+        }
+
+        setMeasurementPoints(points);
+        setCurrentMeasurement(`Total Distance: ${formatDistance(totalDistance)}`);
+
+        // Add distance label to the map
+        const midpoint = coordinates[Math.floor(coordinates.length / 2)];
+        const labelFeature = new Feature({
+          geometry: new Point(midpoint)
+        });
+
+        labelFeature.setStyle(new Style({
+          text: new Text({
+            text: formatDistance(totalDistance),
+            font: '14px Arial, sans-serif',
+            fill: new Fill({ color: '#ff6b35' }),
+            stroke: new Stroke({ color: '#ffffff', width: 3 }),
+            offsetY: -15,
+            backgroundFill: new Fill({ color: 'rgba(0, 0, 0, 0.7)' }),
+            padding: [4, 8, 4, 8]
+          })
+        }));
+
+        measurementLayerRef.current?.getSource()?.addFeature(labelFeature);
+      }
+
+      olMapRef.current?.removeInteraction(drawInteraction);
+      drawInteractionRef.current = null;
+    });
+
+    olMapRef.current.addInteraction(drawInteraction);
+    drawInteractionRef.current = drawInteraction;
+  }, []);
+
+  const stopMeasurement = useCallback(() => {
+    if (!olMapRef.current) return;
+
+    setMeasurementActive(false);
+    setCurrentMeasurement('');
+
+    if (drawInteractionRef.current) {
+      olMapRef.current.removeInteraction(drawInteractionRef.current);
+      drawInteractionRef.current = null;
+    }
+  }, []);
+
+  const clearMeasurements = useCallback(() => {
+    if (!measurementLayerRef.current) return;
+
+    measurementLayerRef.current.getSource()?.clear();
+    setMeasurementPoints([]);
+    setCurrentMeasurement('');
+    stopMeasurement();
+  }, [stopMeasurement]);
+
+  const toggleMeasurementTool = useCallback(() => {
+    if (measurementActive) {
+      stopMeasurement();
+    } else {
+      startMeasurement();
+    }
+    setShowMeasurementTool(!showMeasurementTool);
+  }, [measurementActive, showMeasurementTool, stopMeasurement, startMeasurement]);
+
   // Initialize map on mount
   useEffect(() => {
     const cleanup = initializeMap();
     return cleanup;
   }, [initializeMap]);
+
+  // Handle ESC key to cancel measurement
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && measurementActive) {
+        stopMeasurement();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [measurementActive, stopMeasurement]);
 
   // Search functionality
   const searchResults = searchMarsLocations(searchQuery, MARS_LOCATIONS);
@@ -611,8 +790,8 @@ const OpenLayersMarsMapper: React.FC = () => {
               {isFullscreen ? <Minimize className="w-3 h-3" /> : <Maximize className="w-3 h-3" />}
             </button>
             <button
-              onClick={() => setShowMeasurementTool(!showMeasurementTool)}
-              className={`flex items-center justify-center p-1.5 ${showMeasurementTool ? 'bg-orange-600' : 'bg-gray-600'} hover:bg-orange-700 text-white rounded transition-colors`}
+              onClick={toggleMeasurementTool}
+              className={`flex items-center justify-center p-1.5 ${measurementActive ? 'bg-orange-600' : 'bg-gray-600'} hover:bg-orange-700 text-white rounded transition-colors`}
               title="Measurement Tool"
             >
               <Ruler className="w-3 h-3" />
@@ -844,7 +1023,18 @@ const OpenLayersMarsMapper: React.FC = () => {
                     onChange={(e) => setShowMeasurementTool(e.target.checked)}
                     className="mr-2 rounded"
                   />
-                  {' '}Measurement Tool
+                  {' '}Distance Measurement Tool
+                </label>
+              </div>
+              <div>
+                <label className="text-white text-xs flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={measurementActive}
+                    onChange={(e) => e.target.checked ? startMeasurement() : stopMeasurement()}
+                    className="mr-2 rounded"
+                  />
+                  {' '}Active Measurement Mode
                 </label>
               </div>
               <div className="border-t border-gray-600 pt-3">
@@ -930,27 +1120,82 @@ const OpenLayersMarsMapper: React.FC = () => {
         </div>
       </div>
 
-      {/* Measurement Tool Panel */}
+      {/* Enhanced Measurement Tool Panel */}
       {showMeasurementTool && (
-        <div className="absolute bottom-4 right-4 z-30 w-64">
+        <div className="absolute bottom-4 right-4 z-30 w-80">
           <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 border border-gray-700 shadow-lg">
             <h3 className="text-white text-sm font-semibold mb-3 flex items-center">
               <Ruler className="w-4 h-4 mr-2 text-orange-400" />
-              Measurement Tool
+              Mars Distance Measurement
             </h3>
-            <div className="text-gray-300 text-sm space-y-2">
-              <div>Click on the map to start measuring distances</div>
-              <div className="text-xs text-gray-400">
-                • Single click: Start/continue measuring
-                • Double click: Finish measurement
-                • ESC: Cancel measurement
+
+            <div className="text-gray-300 text-sm space-y-3">
+              {/* Current measurement display */}
+              {currentMeasurement && (
+                <div className="bg-orange-900/30 border border-orange-600/50 rounded p-3">
+                  <div className="text-orange-300 font-medium">{currentMeasurement}</div>
+                  {measurementPoints.length > 1 && (
+                    <div className="text-xs text-orange-200 mt-1">
+                      {measurementPoints.length} measurement points
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Instructions */}
+              <div className="text-xs text-gray-400 space-y-1">
+                {measurementActive ? (
+                  <>
+                    <div className="text-orange-400 font-medium">📏 Measurement Active</div>
+                    <div>• Click on map to start measuring</div>
+                    <div>• Click additional points to extend line</div>
+                    <div>• Double-click to finish measurement</div>
+                    <div>• Uses Mars surface curvature calculations</div>
+                  </>
+                ) : (
+                  <>
+                    <div>Click "Start Measuring" to begin distance measurement</div>
+                    <div>• Accurate Mars surface distance calculation</div>
+                    <div>• Multi-point line measurement support</div>
+                    <div>• Results displayed in meters/kilometers</div>
+                  </>
+                )}
               </div>
-              <button
-                onClick={() => setShowMeasurementTool(false)}
-                className="w-full mt-3 p-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
-              >
-                Close Tool
-              </button>
+
+              {/* Control buttons */}
+              <div className="flex space-x-2 pt-2">
+                {!measurementActive ? (
+                  <button
+                    onClick={startMeasurement}
+                    className="flex-1 p-2 bg-orange-600 hover:bg-orange-700 text-white rounded transition-colors"
+                  >
+                    Start Measuring
+                  </button>
+                ) : (
+                  <button
+                    onClick={stopMeasurement}
+                    className="flex-1 p-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+                  >
+                    Stop Measuring
+                  </button>
+                )}
+
+                <button
+                  onClick={clearMeasurements}
+                  className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                  title="Clear All Measurements"
+                >
+                  Clear
+                </button>
+
+                <button
+                  onClick={() => setShowMeasurementTool(false)}
+                  className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                  title="Close Tool"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
           </div>
         </div>
