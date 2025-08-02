@@ -2,11 +2,21 @@
 import {
     Activity,
     Bookmark,
+    ChevronDown,
+    ChevronUp,
+    Compass,
     Download,
+    Eye,
+    EyeOff,
+    Home,
     Info,
     Layers,
     MapPin,
+    Maximize,
+    Minimize,
+    MousePointer,
     RotateCcw,
+    Ruler,
     Search,
     Settings,
     ZoomIn,
@@ -33,21 +43,21 @@ import { formatCoordinates, getLocationColor, searchMarsLocations } from '../../
 proj4.defs('IAU2000:49900', '+proj=longlat +a=3396190 +b=3376200 +no_defs');
 register(proj4);
 
-// High-Definition NASA Mars data endpoints
+// High-Definition NASA Mars data endpoints using correct Trek API format
 const NASA_MARS_HD_APIS = {
-  // NASA Mars Trek - High Definition Global Mosaic
-  globalHD: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_MGS_MOLA_DEM_mosaic_global_463m/{z}/{x}/{y}.png',
-  // NASA Mars Trek - Viking Color Mosaic (High Quality)
-  vikingColor: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/{z}/{x}/{y}.png',
-  // MRO Context Camera Mosaic (Ultra High Resolution)
-  ctxMosaic: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_MRO_CTX_mosaic_global_232m/{z}/{x}/{y}.png',
-  // MOLA Shaded Relief for Topography
-  molaShade: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_MGS_MOLA_Shade_global_463m/{z}/{x}/{y}.png',
-  // THEMIS Thermal Infrared Mosaic
-  themis: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_ODY_THEMIS_IR_Mosaic_global_100m/{z}/{x}/{y}.png',
-  // HiRISE Ultra High Resolution (for detailed areas)
-  hirise: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_MRO_HiRISE_LS_global/{z}/{x}/{y}.png',
-  // Fallback - USGS Astrogeology
+  // Viking Color Mosaic - Primary base layer (working endpoint)
+  vikingColor: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/default/default028mm/{z}/{y}/{x}.jpg',
+  // MOLA Color Hillshade - Global Mars topography with colors (working endpoint)
+  molaColorShade: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_MGS_MOLA_ClrShade_merge_global_463m/1.0.0/default/default028mm/{z}/{y}/{x}.jpg',
+  // THEMIS Day IR - Corrected endpoint
+  themisDay: 'https://trek.nasa.gov/tiles/Mars/EQ/THEMIS_DayIR_ControlledMosaics_100m_v2_oct2018/1.0.0/default/default028mm/{z}/{y}/{x}.png',
+  // THEMIS Night IR - Corrected endpoint
+  themisNight: 'https://trek.nasa.gov/tiles/Mars/EQ/THEMIS_NightIR_ControlledMosaics_100m_v2_oct2018/1.0.0/default/default028mm/{z}/{y}/{x}.png',
+  // CTX Global Uncontrolled - High resolution context camera
+  ctxGlobal: 'https://trek.nasa.gov/tiles/Mars/EQ/CTX_beta01_uncontrolled_5m_Caltech/1.0.0/default/default028mm/{z}/{y}/{x}.png',
+  // HiRISE Global - Ultra high resolution where available
+  hirise: 'https://trek.nasa.gov/tiles/Mars/EQ/HiRISE_Global/1.0.0/default/default028mm/{z}/{y}/{x}.png',
+  // Fallback - USGS Astrogeology (different coordinate pattern)
   fallback: 'https://astrowebmaps.wr.usgs.gov/webmapatlas/Layers/Mars/Mars_Viking_ClrMosaic_global_925m/{z}/{x}/{y}.png'
 };
 
@@ -86,57 +96,60 @@ const OpenLayersMarsMapper: React.FC = () => {
 
   const [layers, setLayers] = useState<LayerConfig[]>([
     {
-      id: 'globalHD',
-      name: 'Mars Global HD',
-      description: 'NASA Mars Trek - Global High Definition Mosaic',
-      url: NASA_MARS_HD_APIS.globalHD,
-      visible: true,
-      opacity: 1.0,
-      maxZoom: 8
-    },
-    {
       id: 'vikingColor',
       name: 'Viking Color Mosaic',
-      description: 'Mars Viking MDIM21 Color Mosaic - High Quality',
+      description: 'NASA Mars Viking Color Global Mosaic - Primary base layer',
       url: NASA_MARS_HD_APIS.vikingColor,
-      visible: false,
-      opacity: 0.9,
+      visible: true,
+      opacity: 1.0,
       maxZoom: 12
     },
     {
-      id: 'ctxMosaic',
-      name: 'CTX Ultra HD',
-      description: 'MRO Context Camera Mosaic - Ultra High Resolution',
-      url: NASA_MARS_HD_APIS.ctxMosaic,
+      id: 'molaColorShade',
+      name: 'MOLA Color Hillshade',
+      description: 'Mars Global Surveyor MOLA Color Hillshade',
+      url: NASA_MARS_HD_APIS.molaColorShade,
+      visible: false,
+      opacity: 0.9,
+      maxZoom: 10
+    },
+    {
+      id: 'themisDay',
+      name: 'THEMIS Day IR',
+      description: 'THEMIS Daytime Infrared Global Mosaic',
+      url: NASA_MARS_HD_APIS.themisDay,
+      visible: false,
+      opacity: 0.8,
+      maxZoom: 14
+    },
+    {
+      id: 'themisNight',
+      name: 'THEMIS Night IR',
+      description: 'THEMIS Nighttime Infrared Global Mosaic',
+      url: NASA_MARS_HD_APIS.themisNight,
+      visible: false,
+      opacity: 0.7,
+      maxZoom: 14
+    },
+    {
+      id: 'ctxGlobal',
+      name: 'CTX Global HD',
+      description: 'MRO Context Camera Global Uncontrolled Mosaic',
+      url: NASA_MARS_HD_APIS.ctxGlobal,
       visible: false,
       opacity: 0.8,
       minZoom: 8,
-      maxZoom: 16
-    },
-    {
-      id: 'molaShade',
-      name: 'MOLA Topography',
-      description: 'Mars Global Surveyor MOLA Shaded Relief',
-      url: NASA_MARS_HD_APIS.molaShade,
-      visible: false,
-      opacity: 0.7
-    },
-    {
-      id: 'themis',
-      name: 'THEMIS Thermal',
-      description: 'THEMIS Thermal Infrared Mosaic',
-      url: NASA_MARS_HD_APIS.themis,
-      visible: false,
-      opacity: 0.6
+      maxZoom: 18
     },
     {
       id: 'hirise',
-      name: 'HiRISE Ultra Detail',
-      description: 'HiRISE Ultra High Resolution for Detailed Areas',
+      name: 'HiRISE Ultra HD',
+      description: 'HiRISE Ultra High Resolution Global Coverage',
       url: NASA_MARS_HD_APIS.hirise,
       visible: false,
       opacity: 0.9,
-      minZoom: 15
+      minZoom: 15,
+      maxZoom: 20
     },
     {
       id: 'fallback',
@@ -153,9 +166,15 @@ const OpenLayersMarsMapper: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [showBookmarks, setShowBookmarks] = useState(false);
-  const [showLayerPanel, setShowLayerPanel] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [mapLoading, setMapLoading] = useState(true);
+  
+  // New state for enhanced OpenLayers features
+  const [isLayerPanelExpanded, setIsLayerPanelExpanded] = useState(false);
+  const [showMeasurementTool, setShowMeasurementTool] = useState(false);
+  const [showCoordinateInfo, setShowCoordinateInfo] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [mouseCoordinates, setMouseCoordinates] = useState<{lat: number, lon: number} | null>(null);
 
   // Initialize OpenLayers map with HD Mars terrain
   const initializeMap = useCallback(() => {
@@ -277,6 +296,13 @@ const OpenLayersMarsMapper: React.FC = () => {
       }));
     });
 
+    // Handle mouse movement for coordinate tracking
+    map.on('pointermove', (event) => {
+      const coordinate = event.coordinate;
+      const [lon, lat] = coordinate;
+      setMouseCoordinates({ lat, lon });
+    });
+
     // Handle view changes
     map.getView().on('change', () => {
       const view = map.getView();
@@ -348,6 +374,20 @@ const OpenLayersMarsMapper: React.FC = () => {
       });
     }
   }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  }, []);
+
+  const goHome = useCallback(() => {
+    resetView();
+  }, [resetView]);
 
   const flyToLocation = useCallback((location: MarsLocation) => {
     if (olMapRef.current) {
@@ -439,108 +479,162 @@ const OpenLayersMarsMapper: React.FC = () => {
         </div>
       )}
 
-      {/* Map Controls */}
-      <div className="absolute top-4 left-4 z-30 space-y-2">
-        <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg p-3 border border-gray-700 shadow-lg">
-          <h3 className="text-white text-sm font-semibold mb-2 flex items-center">
-            <Activity className="w-4 h-4 mr-2 text-blue-400" />
-            Map Controls
-          </h3>
-          <div className="space-y-2">
+      {/* Compact Map Controls */}
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30">
+        <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg p-2 border border-gray-700 shadow-lg">
+          <div className="flex items-center space-x-1">
             <button
               onClick={zoomIn}
-              className="w-full flex items-center justify-center p-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+              className="flex items-center justify-center p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+              title="Zoom In"
             >
-              <ZoomIn className="w-4 h-4 mr-2" />
-              Zoom In
+              <ZoomIn className="w-3 h-3" />
             </button>
             <button
               onClick={zoomOut}
-              className="w-full flex items-center justify-center p-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+              className="flex items-center justify-center p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+              title="Zoom Out"
             >
-              <ZoomOut className="w-4 h-4 mr-2" />
-              Zoom Out
+              <ZoomOut className="w-3 h-3" />
+            </button>
+            <button
+              onClick={goHome}
+              className="flex items-center justify-center p-1.5 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+              title="Home View"
+            >
+              <Home className="w-3 h-3" />
             </button>
             <button
               onClick={resetView}
-              className="w-full flex items-center justify-center p-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+              className="flex items-center justify-center p-1.5 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+              title="Reset View"
             >
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Reset View
+              <RotateCcw className="w-3 h-3" />
+            </button>
+            <button
+              onClick={toggleFullscreen}
+              className="flex items-center justify-center p-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors"
+              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+            >
+              {isFullscreen ? <Minimize className="w-3 h-3" /> : <Maximize className="w-3 h-3" />}
+            </button>
+            <button
+              onClick={() => setShowMeasurementTool(!showMeasurementTool)}
+              className={`flex items-center justify-center p-1.5 ${showMeasurementTool ? 'bg-orange-600' : 'bg-gray-600'} hover:bg-orange-700 text-white rounded transition-colors`}
+              title="Measurement Tool"
+            >
+              <Ruler className="w-3 h-3" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Layer Panel */}
-      {showLayerPanel && (
-        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30 w-64">
-          <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 border border-gray-700 shadow-lg">
-            <h3 className="text-white text-sm font-semibold mb-3 flex items-center">
+      {/* Expandable Layer Panel */}
+      <div className="absolute right-4 top-20 z-30">
+        <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-700 shadow-lg">
+          {/* Layer Panel Header */}
+          <button 
+            className="flex items-center justify-between p-3 w-full text-left hover:bg-gray-800/50 rounded-t-lg transition-colors"
+            onClick={() => setIsLayerPanelExpanded(!isLayerPanelExpanded)}
+          >
+            <div className="flex items-center">
               <Layers className="w-4 h-4 mr-2 text-green-400" />
-              NASA Mars Data Layers
-            </h3>
-            {layers.map((layer) => (
-              <div key={layer.id} className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-white text-xs flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={layer.visible}
-                      onChange={(e) => updateLayer(layer.id, { visible: e.target.checked })}
-                      className="mr-2 rounded"
-                    />
-                    {layer.name}
-                  </label>
-                </div>
-                <div className="text-xs text-gray-400 mb-2">{layer.description}</div>
-                {layer.visible && (
-                  <div className="ml-4">
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.1"
-                      value={layer.opacity}
-                      onChange={(e) => updateLayer(layer.id, { opacity: parseFloat(e.target.value) })}
-                      className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <div className="text-xs text-gray-400 mt-1">
-                      Opacity: {Math.round(layer.opacity * 100)}%
-                    </div>
+              <span className="text-white text-sm font-semibold">NASA Mars Data Layers</span>
+            </div>
+            {isLayerPanelExpanded ? (
+              <ChevronUp className="w-4 h-4 text-gray-400" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-400" />
+            )}
+          </button>
+          
+          {/* Expandable Layer Content */}
+          {isLayerPanelExpanded && (
+            <div className="p-4 pt-0 max-h-96 overflow-y-auto w-80">
+              {layers.map((layer) => (
+                <div key={layer.id} className="mb-4 border-b border-gray-700 pb-3 last:border-b-0">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-white text-xs flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={layer.visible}
+                        onChange={(e) => updateLayer(layer.id, { visible: e.target.checked })}
+                        className="mr-2 rounded"
+                      />
+                      <span className="font-medium">{layer.name}</span>
+                    </label>
+                    <button
+                      onClick={() => updateLayer(layer.id, { visible: !layer.visible })}
+                      className="p-1 hover:bg-gray-700 rounded transition-colors"
+                      title={layer.visible ? "Hide Layer" : "Show Layer"}
+                    >
+                      {layer.visible ? (
+                        <Eye className="w-3 h-3 text-green-400" />
+                      ) : (
+                        <EyeOff className="w-3 h-3 text-gray-400" />
+                      )}
+                    </button>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
+                  <div className="text-xs text-gray-400 mb-2">{layer.description}</div>
+                  {layer.visible && (
+                    <div className="ml-4">
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={layer.opacity}
+                        onChange={(e) => updateLayer(layer.id, { opacity: parseFloat(e.target.value) })}
+                        className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                      />
+                      <div className="text-xs text-gray-400 mt-1">
+                        Opacity: {Math.round(layer.opacity * 100)}%
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
-      {/* Action Buttons */}
+      {/* Enhanced Action Buttons */}
       <div className="absolute top-4 right-4 z-30 space-y-2">
         <button
           onClick={() => setShowSearch(!showSearch)}
-          className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-lg"
+          className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-lg"
+          title="Search Mars Locations"
         >
-          <Search className="w-5 h-5" />
+          <Search className="w-4 h-4" />
         </button>
         <button
           onClick={() => setShowBookmarks(!showBookmarks)}
-          className="p-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-lg"
+          className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-lg"
+          title="Bookmarks"
         >
-          <Bookmark className="w-5 h-5" />
+          <Bookmark className="w-4 h-4" />
         </button>
         <button
           onClick={() => setShowSettings(!showSettings)}
-          className="p-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors shadow-lg"
+          className="p-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors shadow-lg"
+          title="Settings"
         >
-          <Settings className="w-5 h-5" />
+          <Settings className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => setShowCoordinateInfo(!showCoordinateInfo)}
+          className={`p-2 ${showCoordinateInfo ? 'bg-orange-600' : 'bg-gray-600'} hover:bg-orange-700 text-white rounded-lg transition-colors shadow-lg`}
+          title="Coordinate Info"
+        >
+          <MousePointer className="w-4 h-4" />
         </button>
         <button
           onClick={exportData}
-          className="p-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors shadow-lg"
+          className="p-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors shadow-lg"
+          title="Export Data"
         >
-          <Download className="w-5 h-5" />
+          <Download className="w-4 h-4" />
         </button>
       </div>
 
@@ -619,32 +713,66 @@ const OpenLayersMarsMapper: React.FC = () => {
         </div>
       )}
 
-      {/* Settings Panel */}
+      {/* Enhanced Settings Panel */}
       {showSettings && (
         <div className="absolute top-16 right-4 z-30 w-80">
           <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 border border-gray-700 shadow-lg">
             <h3 className="text-white text-sm font-semibold mb-3 flex items-center">
               <Settings className="w-4 h-4 mr-2 text-purple-400" />
-              Map Settings
+              Map Settings & Controls
             </h3>
             <div className="space-y-3">
               <div>
                 <label className="text-white text-xs flex items-center">
                   <input
                     type="checkbox"
-                    checked={showLayerPanel}
-                    onChange={(e) => setShowLayerPanel(e.target.checked)}
+                    checked={isLayerPanelExpanded}
+                    onChange={(e) => setIsLayerPanelExpanded(e.target.checked)}
                     className="mr-2 rounded"
                   />
-                  {' '}Show Layer Panel
+                  {' '}Expand Layer Panel
                 </label>
               </div>
-              <div className="text-xs text-gray-400">
-                <div className="mb-1">Data Sources:</div>
-                <div>• NASA Mars Trek</div>
-                <div>• USGS Astrogeology</div>
-                <div>• Mars Global Surveyor MOLA</div>
-                <div>• Thermal Emission Imaging System</div>
+              <div>
+                <label className="text-white text-xs flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={showCoordinateInfo}
+                    onChange={(e) => setShowCoordinateInfo(e.target.checked)}
+                    className="mr-2 rounded"
+                  />
+                  {' '}Show Mouse Coordinates
+                </label>
+              </div>
+              <div>
+                <label className="text-white text-xs flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={showMeasurementTool}
+                    onChange={(e) => setShowMeasurementTool(e.target.checked)}
+                    className="mr-2 rounded"
+                  />
+                  {' '}Measurement Tool
+                </label>
+              </div>
+              <div className="border-t border-gray-600 pt-3">
+                <div className="text-xs text-gray-400">
+                  <div className="mb-2 font-medium text-white">Controls:</div>
+                  <div>• Left Click: Navigate</div>
+                  <div>• Scroll: Zoom in/out</div>
+                  <div>• Shift+Drag: Rotate map</div>
+                  <div>• Right Click: Context menu</div>
+                </div>
+              </div>
+              <div className="border-t border-gray-600 pt-3">
+                <div className="text-xs text-gray-400">
+                  <div className="mb-1 font-medium text-white">Data Sources:</div>
+                  <div>• NASA Mars Trek</div>
+                  <div>• USGS Astrogeology</div>
+                  <div>• Mars Global Surveyor MOLA</div>
+                  <div>• Thermal Emission Imaging System</div>
+                  <div>• Mars Reconnaissance Orbiter</div>
+                </div>
               </div>
             </div>
           </div>
@@ -653,7 +781,7 @@ const OpenLayersMarsMapper: React.FC = () => {
 
       {/* Location Info Panel */}
       {selectedLocation && (
-        <div className="absolute bottom-4 left-4 z-30 w-80">
+        <div className="absolute bottom-4 right-4 z-30 w-80">
           <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 border border-gray-700 shadow-lg">
             <h3 className="text-white text-lg font-semibold mb-2 flex items-center">
               <MapPin className="w-5 h-5 mr-2 text-red-400" />
@@ -682,19 +810,70 @@ const OpenLayersMarsMapper: React.FC = () => {
         </div>
       )}
 
-      {/* Status Bar */}
-      <div className="absolute bottom-4 right-4 z-30">
+      {/* Status Bar with Enhanced Info */}
+      <div className="absolute bottom-4 left-4 z-30">
         <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg p-3 border border-gray-700 shadow-lg">
-          <div className="text-white text-sm flex items-center space-x-4">
-            <div className="flex items-center">
-              <Activity className="w-4 h-4 mr-1 text-green-400" />
-              Zoom: {viewState.zoom.toFixed(1)}x
+          <div className="text-white text-sm space-y-2">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <Activity className="w-4 h-4 mr-1 text-green-400" />
+                Zoom: {viewState.zoom.toFixed(1)}x
+              </div>
+              <div>
+                Center: {formatCoordinates(viewState.centerLat, viewState.centerLon)}
+              </div>
+              <div className="text-green-400 text-xs">
+                NASA Live
+              </div>
             </div>
-            <div>
-              Center: {formatCoordinates(viewState.centerLat, viewState.centerLon)}
+            {showCoordinateInfo && mouseCoordinates && (
+              <div className="text-xs text-blue-400 border-t border-gray-600 pt-2">
+                <div className="flex items-center">
+                  <MousePointer className="w-3 h-3 mr-1" />
+                  Mouse: {formatCoordinates(mouseCoordinates.lat, mouseCoordinates.lon)}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Measurement Tool Panel */}
+      {showMeasurementTool && (
+        <div className="absolute bottom-4 right-4 z-30 w-64">
+          <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 border border-gray-700 shadow-lg">
+            <h3 className="text-white text-sm font-semibold mb-3 flex items-center">
+              <Ruler className="w-4 h-4 mr-2 text-orange-400" />
+              Measurement Tool
+            </h3>
+            <div className="text-gray-300 text-sm space-y-2">
+              <div>Click on the map to start measuring distances</div>
+              <div className="text-xs text-gray-400">
+                • Single click: Start/continue measuring
+                • Double click: Finish measurement
+                • ESC: Cancel measurement
+              </div>
+              <button
+                onClick={() => setShowMeasurementTool(false)}
+                className="w-full mt-3 p-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+              >
+                Close Tool
+              </button>
             </div>
-            <div className="text-green-400 text-xs">
-              NASA Live
+          </div>
+        </div>
+      )}
+
+      {/* Navigation Compass */}
+      <div className="absolute top-20 left-4 z-30">
+        <div className="bg-gray-900/90 backdrop-blur-sm rounded-full p-3 border border-gray-700 shadow-lg">
+          <div className="relative">
+            <Compass 
+              className="w-8 h-8 text-blue-400" 
+              style={{ transform: `rotate(${-viewState.rotation * 180 / Math.PI}deg)` }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-1 h-1 bg-red-500 rounded-full"></div>
             </div>
           </div>
         </div>
