@@ -37,14 +37,12 @@ export const getLayerIcon = (type: string) => {
 };
 
 export const searchMarsLocations = (query: string, locations: MarsLocation[]): MarsLocation[] => {
-  if (!query.trim()) {
-    return [];
-  }
-
+  if (!query) return [];
+  const lowerQuery = query.toLowerCase();
   return locations.filter(location =>
-    location.name.toLowerCase().includes(query.toLowerCase()) ||
-    location.description.toLowerCase().includes(query.toLowerCase()) ||
-    location.type.toLowerCase().includes(query.toLowerCase())
+    location.name.toLowerCase().includes(lowerQuery) ||
+    (location.description?.toLowerCase().includes(lowerQuery) ?? false) ||
+    location.type.toLowerCase().includes(lowerQuery)
   );
 };
 

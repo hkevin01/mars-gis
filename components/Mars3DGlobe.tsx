@@ -4,7 +4,6 @@ import {
     AdditiveBlending,
     AmbientLight,
     BackSide,
-    ClampToEdgeWrapping,
     Clock,
     Color,
     DirectionalLight,
@@ -19,9 +18,8 @@ import {
     ShaderMaterial,
     SphereGeometry,
     TextureLoader,
-    Vector2,
     Vector3,
-    WebGLRenderer,
+    WebGLRenderer
 } from 'three';
 
 // Types
@@ -59,9 +57,10 @@ const ROTATION_SPEED = 0.001;
 const MARS_COLOR = 0xb86434;
 
 const MARS_TEXTURE_URLS = {
-  base: '/textures/mars_base.jpg',
-  elevation: '/textures/mars_elevation.jpg',
-  normal: '/textures/mars_normal.jpg'
+  base: '/mars_base.jpg',
+  elevation: '/mars_elevation.jpg',
+  normal: '/mars_normal.jpg',
+  fallback: '/mars_simplified.jpg'
 };
 
 export const Mars3DGlobe = ({
@@ -109,6 +108,9 @@ export const Mars3DGlobe = ({
       blendMode: 2
     }
   ]);
+
+  // Add error state
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Create Mars atmosphere
   const createAtmosphere = useCallback(() => {
@@ -207,41 +209,34 @@ export const Mars3DGlobe = ({
   const createMarsGlobe = useCallback(async () => {
     if (!sceneRef.current) return;
 
+    const geometry = new SphereGeometry(MARS_RADIUS, 64, 32);
+
     try {
-      // Load textures
-      const baseTexture = await new Promise<THREE.Texture>((resolve, reject) => {
-        textureLoader.current.load(MARS_TEXTURE_URLS.base, resolve, undefined, reject);
+      // Try loading the simplified texture first
+      const texture = await new Promise((resolve, reject) => {
+        textureLoader.current.load(
+          MARS_TEXTURE_URLS.fallback,
+          (texture) => {
+            texture.wrapS = RepeatWrapping;
+            texture.wrapT = RepeatWrapping;
+            texture.minFilter = LinearFilter;
+            resolve(texture);
+          },
+          undefined,
+          (error) => reject(error)
+        );
       });
 
-      const normalTexture = await new Promise<THREE.Texture>((resolve, reject) => {
-        textureLoader.current.load(MARS_TEXTURE_URLS.normal, resolve, undefined, reject);
-      });
-
-      // Configure textures
-      [baseTexture, normalTexture].forEach(texture => {
-        texture.wrapS = RepeatWrapping;
-        texture.wrapT = ClampToEdgeWrapping;
-        texture.minFilter = LinearFilter;
-        texture.magFilter = LinearFilter;
-      });
-
-      // Mars geometry with enhanced detail
-      const geometry = new SphereGeometry(MARS_RADIUS, 128, 64);
-
-      // Enhanced Mars material
       const material = new MeshStandardMaterial({
-        map: baseTexture,
-        normalMap: normalTexture,
-        normalScale: new Vector2(0.3, 0.3),
-        roughness: 0.7,
-        metalness: 0.3,
-        transparent: false,
-        color: MARS_COLOR
+        map: texture,
+        bumpScale: 0.05,
+        roughness: 0.8,
+        metalness: 0.1,
+        color: 0xffffff
       });
+      material.needsUpdate = true;
 
       const mars = new Mesh(geometry, material);
-      mars.castShadow = true;
-      mars.receiveShadow = true;
       marsRef.current = mars;
       sceneRef.current.add(mars);
 
@@ -252,20 +247,27 @@ export const Mars3DGlobe = ({
 
       // Setup lighting
       setupLighting();
-
-      setIsLoading(false);
     } catch (error) {
-      console.error("Error loading Mars textures:", error);
-      // Fallback to basic material
-      const geometry = new SphereGeometry(MARS_RADIUS, 64, 32);
+      console.error("Failed to load Mars texture:", error);
+      setLoadError("High quality textures could not be loaded. Using basic visualization.");
+
+      // Fallback to basic colored material
       const material = new MeshStandardMaterial({
         color: MARS_COLOR,
         roughness: 0.7,
         metalness: 0.3
       });
+
       const mars = new Mesh(geometry, material);
       marsRef.current = mars;
       sceneRef.current.add(mars);
+
+      // Still create atmosphere and lighting even with fallback
+      if (showAtmosphere) {
+        createAtmosphere();
+      }
+      setupLighting();
+    } finally {
       setIsLoading(false);
     }
   }, [showAtmosphere, createAtmosphere, setupLighting]);
@@ -471,11 +473,19 @@ export const Mars3DGlobe = ({
 
       {/* Loading Overlay */}
       {isLoading && (
-        <div className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg">
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
           <div className="text-white text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-orange-500 border-t-transparent mx-auto mb-4"></div>
-            <div className="text-sm">Loading Mars 3D Globe...</div>
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent mx-auto mb-2" />
+            <div>Loading Mars Surface...</div>
           </div>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {loadError && (
+        <div className="absolute bottom-4 left-4 right-4 bg-red-900/90 text-white p-3 rounded-lg text-sm">
+          <div className="font-semibold mb-1">Using simplified Mars model</div>
+          <div className="text-red-200">{loadError}</div>
         </div>
       )}
 

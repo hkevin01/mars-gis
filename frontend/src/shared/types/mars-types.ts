@@ -22,13 +22,13 @@ export interface BookmarkType {
 }
 
 export interface MarsLocation {
-  id: number;
+  id: string;
   name: string;
   lat: number;
   lon: number;
   type: string;
-  description: string;
-  elevation: number;
+  description?: string;
+  elevation?: number;
 }
 
 export type MarsLocationArray = MarsLocation[];

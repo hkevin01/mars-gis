@@ -259,7 +259,7 @@ const GoogleEarthMarsMapper: React.FC = () => {
       />
 
       {/* Control panels */}
-      <div className="absolute top-4 right-4 z-20 flex flex-col space-y-2 fade-in-right">
+      <div className="absolute top-4 right-[316px] z-20 flex flex-col space-y-2 fade-in-right">
         <button
           onClick={() => setLayerPanelOpen(!layerPanelOpen)}
           className="bg-black/20 backdrop-blur-md rounded-lg border border-white/10 p-3 hover:bg-white/10 transition-colors"
@@ -418,7 +418,7 @@ const GoogleEarthMarsMapper: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-gray-400">Elevation</div>
-                  <div>{selectedLocation.elevation.toLocaleString()}m</div>
+                  <div>{selectedLocation.elevation?.toLocaleString() ?? 'Unknown'}m</div>
                 </div>
               </div>
 

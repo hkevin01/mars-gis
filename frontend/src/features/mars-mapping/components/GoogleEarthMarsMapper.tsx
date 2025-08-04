@@ -418,7 +418,7 @@ const GoogleEarthMarsMapper: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-gray-400">Elevation</div>
-                  <div>{selectedLocation.elevation.toLocaleString()}m</div>
+                  <div>{selectedLocation.elevation?.toLocaleString() ?? 'Unknown'}m</div>
                 </div>
               </div>
 

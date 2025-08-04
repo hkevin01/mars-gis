@@ -350,10 +350,11 @@ const GoogleEarthMarsMapper: React.FC = () => {
       return;
     }
 
+    const lowerQuery = query.toLowerCase();
     const filtered = MARS_LOCATIONS.filter(location =>
-      location.name.toLowerCase().includes(query.toLowerCase()) ||
-      location.description.toLowerCase().includes(query.toLowerCase()) ||
-      location.type.toLowerCase().includes(query.toLowerCase())
+      location.name.toLowerCase().includes(lowerQuery) ||
+      (location.description?.toLowerCase().includes(lowerQuery) ?? false) ||
+      location.type.toLowerCase().includes(lowerQuery)
     );
 
     setSearchResults(filtered);
@@ -733,7 +734,7 @@ const GoogleEarthMarsMapper: React.FC = () => {
                       <p className="text-sm text-gray-400">{location.description}</p>
                       <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
                         <span>{location.lat.toFixed(2)}°, {location.lon.toFixed(2)}°</span>
-                        <span>Elev: {location.elevation.toLocaleString()}m</span>
+                        <span>Elev: {location.elevation?.toLocaleString() ?? 'Unknown'}m</span>
                       </div>
                     </button>
                   );
@@ -854,7 +855,7 @@ const GoogleEarthMarsMapper: React.FC = () => {
                   </div>
                   <div>
                     <span className="text-gray-400">Elevation:</span>
-                    <div>{selectedLocation.elevation.toLocaleString()}m</div>
+                    <div>{selectedLocation.elevation?.toLocaleString() ?? 'Unknown'}m</div>
                   </div>
                 </div>
 

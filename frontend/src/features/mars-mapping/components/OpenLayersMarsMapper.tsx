@@ -7,6 +7,7 @@ import {
   Download,
   Eye,
   EyeOff,
+  Globe,
   Home,
   Info,
   Layers,
@@ -31,11 +32,13 @@ import { register } from 'ol/proj/proj4';
 import { Vector as VectorSource, XYZ } from 'ol/source';
 import { Circle, Fill, Stroke, Style, Text } from 'ol/style';
 import proj4 from 'proj4';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { MarsLocation } from '../../../shared/types/mars-types';
+import Mars3DGlobe from '../../3d-visualization/components/Mars3DGlobe';
 
 // Import shared modules
 import { MARS_LOCATIONS } from '../../../shared/constants/mars-data';
-import type { BookmarkType, MarsLocation, ViewState } from '../../../shared/types/mars-types';
+import type { BookmarkType, ViewState } from '../../../shared/types/mars-types';
 import { formatCoordinates, getLocationColor, searchMarsLocations } from '../../../shared/utils/mars-utils';
 
 // Register Mars coordinate system
@@ -107,7 +110,7 @@ interface LayerConfig {
   maxZoom?: number;
 }
 
-const OpenLayersMarsMapper: React.FC = () => {
+const OpenLayersMarsMapper = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const olMapRef = useRef<Map | null>(null);
   const markersLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
@@ -206,6 +209,7 @@ const OpenLayersMarsMapper: React.FC = () => {
   const [measurementActive, setMeasurementActive] = useState(false);
   const [currentMeasurement, setCurrentMeasurement] = useState<string>('');
   const [measurementPoints, setMeasurementPoints] = useState<[number, number][]>([]);
+  const [showMars3D, setShowMars3D] = useState(false);
 
   // Initialize OpenLayers map with HD Mars terrain
   const initializeMap = useCallback(() => {
@@ -671,7 +675,6 @@ const OpenLayersMarsMapper: React.FC = () => {
 
   return (
     <div className="w-full h-screen bg-black relative overflow-hidden">
-      {/* CSS Styles for Mars background effects */}
       <style dangerouslySetInnerHTML={{
         __html: `
           @keyframes marsAtmosphere {
@@ -704,31 +707,48 @@ const OpenLayersMarsMapper: React.FC = () => {
           }
         `
       }} />
-
-      {/* OpenLayers Map Container with Mars-like background */}
-      <div
-        ref={mapRef}
-        className="w-full h-full mars-background-container transition-opacity duration-500 ease-in-out"
-        style={{
-          background: `
-            radial-gradient(ellipse at 30% 30%, rgba(205, 133, 63, 0.3) 0%, transparent 50%),
-            radial-gradient(ellipse at 70% 70%, rgba(160, 82, 45, 0.2) 0%, transparent 50%),
-            linear-gradient(135deg,
-              #1a0f0a 0%,
-              #2d1810 15%,
-              #3d2317 30%,
-              #4a2c1a 45%,
-              #5c3520 60%,
-              #6b3d24 75%,
-              #7a4428 90%,
-              #8b4a2d 100%
-            )
-          `,
-          backgroundSize: '400% 400%, 300% 300%, 100% 100%',
-          backgroundPosition: '0% 0%, 100% 100%, 0% 0%',
-          animation: 'marsAtmosphere 20s ease-in-out infinite alternate'
-        }}
-      />
+      <div className="w-full h-full">
+        {showMars3D ? (
+          <Mars3DGlobe
+            width={window.innerWidth}
+            height={window.innerHeight}
+            autoRotate={true}
+            showAtmosphere={true}
+            selectedLocation={selectedLocation}
+            onLocationClick={(lat: number, lon: number) => {
+              const view = olMapRef.current?.getView();
+              if (view) {
+                view.setCenter([lon, lat]);
+                view.setZoom(6);
+              }
+            }}
+          />
+        ) : (
+          <div
+            ref={mapRef}
+            className="w-full h-full mars-background-container transition-opacity duration-500 ease-in-out"
+            style={{
+              background: `
+                radial-gradient(ellipse at 30% 30%, rgba(205, 133, 63, 0.3) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 70%, rgba(160, 82, 45, 0.2) 0%, transparent 50%),
+                linear-gradient(135deg,
+                  #1a0f0a 0%,
+                  #2d1810 15%,
+                  #3d2317 30%,
+                  #4a2c1a 45%,
+                  #5c3520 60%,
+                  #6b3d24 75%,
+                  #7a4428 90%,
+                  #8b4a2d 100%
+                )
+              `,
+              backgroundSize: '400% 400%, 300% 300%, 100% 100%',
+              backgroundPosition: '0% 0%, 100% 100%, 0% 0%',
+              animation: 'marsAtmosphere 20s ease-in-out infinite alternate'
+            }}
+          ></div>
+        )}
+      </div>
 
       {/* Smooth Loading Overlay with Mars theme */}
       {mapLoading && (
@@ -794,6 +814,13 @@ const OpenLayersMarsMapper: React.FC = () => {
               title="Measurement Tool"
             >
               <Ruler className="w-3 h-3" />
+            </button>
+            <button
+              onClick={() => setShowMars3D(!showMars3D)}
+              className={`flex items-center justify-center p-1.5 ${showMars3D ? 'bg-indigo-600' : 'bg-gray-600'} hover:bg-indigo-700 text-white rounded transition-colors`}
+              title="Toggle 3D View"
+            >
+              <Globe className="w-3 h-3" />
             </button>
           </div>
         </div>
@@ -1062,7 +1089,7 @@ const OpenLayersMarsMapper: React.FC = () => {
 
       {/* Location Info Panel */}
       {selectedLocation && (
-        <div className="absolute bottom-4 right-4 z-30 w-80">
+        <div className="absolute bottom-4 right-[316px] z-30 w-80">
           <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 border border-gray-700 shadow-lg">
             <h3 className="text-white text-lg font-semibold mb-2 flex items-center">
               <MapPin className="w-5 h-5 mr-2 text-red-400" />
@@ -1074,7 +1101,7 @@ const OpenLayersMarsMapper: React.FC = () => {
                 Type: {selectedLocation.type}
               </div>
               <div>Coordinates: {formatCoordinates(selectedLocation.lat, selectedLocation.lon)}</div>
-              <div>Elevation: {selectedLocation.elevation}m</div>
+              <div>Elevation: {selectedLocation.elevation?.toLocaleString() ?? 'Unknown'}m</div>
               {selectedLocation.description && (
                 <div className="mt-2 text-sm bg-gray-800 p-2 rounded">
                   {selectedLocation.description}
@@ -1090,16 +1117,6 @@ const OpenLayersMarsMapper: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Instructions Overlay */}
-      <div className="absolute bottom-4 right-4 bg-gray-900/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border border-gray-700 z-30">
-        <div className="text-xs text-gray-300 space-y-1">
-          <div className="text-sm font-medium text-red-400 mb-2">Mars-GIS v3.0</div>
-          <div>• Click locations to explore</div>
-          <div>• Use layer controls for NASA data</div>
-          <div>• Switch to 3D for immersive view</div>
-        </div>
-      </div>
 
       {/* Enhanced Measurement Tool Panel */}
       {showMeasurementTool && (
@@ -1196,8 +1213,20 @@ const OpenLayersMarsMapper: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Coordinate Display */}
+      {showCoordinateInfo && mouseCoordinates && (
+        <div className="absolute bottom-4 left-4 z-30">
+          <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-gray-700 shadow-lg">
+            <div className="text-white text-xs">
+              {formatCoordinates(mouseCoordinates.lat, mouseCoordinates.lon)}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default OpenLayersMarsMapper;
+const Component = OpenLayersMarsMapper;
+export default Component;

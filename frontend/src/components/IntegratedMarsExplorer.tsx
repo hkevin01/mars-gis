@@ -183,13 +183,13 @@ const IntegratedMarsExplorer: React.FC<IntegratedMarsExplorerProps> = ({
         </div>
       </div>
 
-      {/* Additional Controls */}
-      <div className="absolute top-4 right-4 z-50 space-y-2">
+            {/* Main Controls */}
+      <div className="absolute top-4 right-[316px] z-50 space-y-2">
         {/* Sync Toggle (for split view) */}
         {currentView === 'split' && (
           <button
             onClick={() => setSyncViews(!syncViews)}
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-2 ${
               syncViews
                 ? 'bg-green-600 hover:bg-green-700 text-white'
                 : 'bg-gray-600 hover:bg-gray-700 text-white'
@@ -199,8 +199,10 @@ const IntegratedMarsExplorer: React.FC<IntegratedMarsExplorerProps> = ({
             <Navigation className="w-4 h-4" />
           </button>
         )}
+      </div>
 
-        {/* Fullscreen Toggle */}
+      {/* Fullscreen Button - Fixed in top right */}
+      <div className="absolute top-4 right-4 z-50">
         <button
           onClick={() => {
             if (!document.fullscreenElement) {
@@ -266,7 +268,7 @@ const IntegratedMarsExplorer: React.FC<IntegratedMarsExplorerProps> = ({
       </div>
 
       {/* Mars-GIS Branding */}
-      <div className="absolute top-4 left-4 z-50">
+      <div className="absolute top-4 left-[216px] z-50">
         <div className="bg-gradient-to-r from-red-900/80 to-orange-900/80 backdrop-blur-sm rounded-lg px-4 py-2 border border-red-700/50">
           <div className="text-white font-bold text-lg">Mars-GIS</div>
           <div className="text-orange-300 text-xs">Phase 3.0 - Enhanced Exploration</div>
