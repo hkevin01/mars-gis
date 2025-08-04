@@ -1,15 +1,15 @@
 // Animation handling with CSS transitions
 import {
-    Bookmark,
-    Globe,
-    Info,
-    Layers,
-    Maximize2,
-    Minimize2,
-    MousePointer,
-    Search,
-    Target,
-    X
+  Bookmark,
+  Globe,
+  Info,
+  Layers,
+  Maximize2,
+  Minimize2,
+  MousePointer,
+  Search,
+  Target,
+  X
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -301,7 +301,7 @@ const GoogleEarthMarsMapper: React.FC = () => {
 
       {/* Layer Panel */}
       {layerPanelOpen && (
-        <div className="absolute top-16 right-4 z-30 w-80 fade-in-right">
+        <div className="absolute top-16 right-[316px] z-30 w-80 fade-in-right">
           <div className="bg-black/30 backdrop-blur-xl rounded-xl border border-white/10 p-4 max-h-96 overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold flex items-center">
@@ -324,7 +324,7 @@ const GoogleEarthMarsMapper: React.FC = () => {
 
       {/* Search Panel */}
       {searchPanelOpen && (
-        <div className="absolute top-16 right-4 z-30 w-80 fade-in-right">
+        <div className="absolute top-16 right-[316px] z-30 w-80 fade-in-right">
           <div className="bg-black/30 backdrop-blur-xl rounded-xl border border-white/10 p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold flex items-center">
@@ -351,7 +351,7 @@ const GoogleEarthMarsMapper: React.FC = () => {
 
       {/* Bookmark Panel */}
       {bookmarkPanelOpen && (
-        <div className="absolute top-16 right-4 z-30 w-80 fade-in-right">
+        <div className="absolute top-16 right-[316px] z-30 w-80 fade-in-right">
           <div className="bg-black/30 backdrop-blur-xl rounded-xl border border-white/10 p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold flex items-center">

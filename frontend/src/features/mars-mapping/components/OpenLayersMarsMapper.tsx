@@ -897,7 +897,7 @@ const OpenLayersMarsMapper = () => {
       </div>
 
       {/* Enhanced Action Buttons */}
-      <div className="absolute top-4 right-4 z-30 space-y-2">
+      <div className="absolute top-4 right-[204px] z-30 space-y-2">
         <button
           onClick={() => setShowSearch(!showSearch)}
           className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-lg"
@@ -937,7 +937,7 @@ const OpenLayersMarsMapper = () => {
 
       {/* Search Panel */}
       {showSearch && (
-        <div className="absolute top-16 right-4 z-30 w-80">
+        <div className="absolute top-16 right-[204px] z-30 w-80">
           <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 border border-gray-700 shadow-lg">
             <h3 className="text-white text-sm font-semibold mb-3 flex items-center">
               <Search className="w-4 h-4 mr-2 text-blue-400" />
@@ -975,7 +975,7 @@ const OpenLayersMarsMapper = () => {
 
       {/* Bookmarks Panel */}
       {showBookmarks && (
-        <div className="absolute top-16 right-4 z-30 w-80">
+        <div className="absolute top-16 right-[204px] z-30 w-80">
           <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 border border-gray-700 shadow-lg">
             <h3 className="text-white text-sm font-semibold mb-3 flex items-center">
               <Bookmark className="w-4 h-4 mr-2 text-green-400" />
@@ -1012,7 +1012,7 @@ const OpenLayersMarsMapper = () => {
 
       {/* Enhanced Settings Panel */}
       {showSettings && (
-        <div className="absolute top-16 right-4 z-30 w-80">
+        <div className="absolute top-16 right-[204px] z-30 w-80">
           <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 border border-gray-700 shadow-lg">
             <h3 className="text-white text-sm font-semibold mb-3 flex items-center">
               <Settings className="w-4 h-4 mr-2 text-purple-400" />
