@@ -1,12 +1,19 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2019",
     "lib": [
       "dom",
       "dom.iterable",
-      "es6"
+      "es2019",
+      "es2020.bigint",
+      "es2020.date",
+      "es2020.number",
+      "es2020.promise",
+      "es2020.string",
+      "es2020.symbol.wellknown",
+      "es2021.string"
     ],
-    "types": ["three"],
+    "types": ["node", "three"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,

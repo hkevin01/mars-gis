@@ -1,6 +1,5 @@
 // Professional OpenLayers Mars Mapper with NASA Data Integration
 import {
-  Activity,
   Bookmark,
   ChevronDown,
   ChevronUp,
@@ -20,7 +19,7 @@ import {
   Search,
   Settings,
   ZoomIn,
-  ZoomOut,
+  ZoomOut
 } from 'lucide-react';
 import { Feature, Map, View } from 'ol';
 import { LineString, Point } from 'ol/geom';
@@ -895,7 +894,7 @@ const OpenLayersMarsMapper: React.FC = () => {
         </button>
         <button
           onClick={() => setShowCoordinateInfo(!showCoordinateInfo)}
-          className={`p-2 ${showCoordinateInfo ? 'bg-orange-600' : 'bg-gray-600'} hover:bg-orange-700 text-white rounded-lg transition-colors shadow-lg`}
+          className={`p-2 ${showCoordinateInfo ? 'bg-orange-600' : 'bg-gray-600'} hover:bg-orange-700 text-white rounded-lg transition-colors`}
           title="Coordinate Info"
         >
           <MousePointer className="w-4 h-4" />
@@ -1092,31 +1091,13 @@ const OpenLayersMarsMapper: React.FC = () => {
         </div>
       )}
 
-      {/* Status Bar with Enhanced Info */}
-      <div className="absolute bottom-4 left-4 z-30">
-        <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg p-3 border border-gray-700 shadow-lg">
-          <div className="text-white text-sm space-y-2">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center">
-                <Activity className="w-4 h-4 mr-1 text-green-400" />
-                Zoom: {viewState.zoom.toFixed(1)}x
-              </div>
-              <div>
-                Center: {formatCoordinates(viewState.centerLat, viewState.centerLon)}
-              </div>
-              <div className="text-green-400 text-xs">
-                NASA Live
-              </div>
-            </div>
-            {showCoordinateInfo && mouseCoordinates && (
-              <div className="text-xs text-blue-400 border-t border-gray-600 pt-2">
-                <div className="flex items-center">
-                  <MousePointer className="w-3 h-3 mr-1" />
-                  Mouse: {formatCoordinates(mouseCoordinates.lat, mouseCoordinates.lon)}
-                </div>
-              </div>
-            )}
-          </div>
+      {/* Instructions Overlay */}
+      <div className="absolute bottom-4 right-4 bg-gray-900/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border border-gray-700 z-30">
+        <div className="text-xs text-gray-300 space-y-1">
+          <div className="text-sm font-medium text-red-400 mb-2">Mars-GIS v3.0</div>
+          <div>• Click locations to explore</div>
+          <div>• Use layer controls for NASA data</div>
+          <div>• Switch to 3D for immersive view</div>
         </div>
       </div>
 
