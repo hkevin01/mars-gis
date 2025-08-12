@@ -103,6 +103,7 @@ build/
 dist/
 .next/
 out/
+frontend/build/
 
 # Frontend Environment
 .env
@@ -115,6 +116,7 @@ out/
 .eslintcache
 *.tsbuildinfo
 .parcel-cache
+frontend/.eslintcache
 
 # Storybook
 storybook-static/
@@ -122,8 +124,56 @@ storybook-static/
 # Testing
 coverage/
 .nyc_output
+frontend/coverage/
 
 # Editor temp files
 *.tmp
 *.temp
 .sass-cache
+
+# Cesium Assets (copied from node_modules)
+frontend/public/cesium/
+frontend/public/textures/
+
+# React Scripts and CRA
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# TypeScript compilation
+frontend/*.tsbuildinfo
+
+# ESLint
+frontend/.eslintcache
+
+# Cypress
+frontend/cypress/videos/
+frontend/cypress/screenshots/
+frontend/cypress/downloads/
+
+# Jest
+frontend/jest-html-reporters-attach/
+
+# PostCSS
+frontend/.postcssrc*
+
+# Webpack and bundlers
+frontend/webpack-stats.json
+frontend/stats.json
+
+# React specific
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Temporary frontend files
+frontend/*.tmp
+frontend/*.temp
+frontend/.sass-cache/
+frontend/.stylelintcache
+
+# Browser downloads and uploads
+frontend/downloads/
+frontend/uploads/

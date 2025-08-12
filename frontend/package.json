@@ -47,6 +47,7 @@
   },
   "scripts": {
   "postinstall": "node scripts/copy-cesium.js",
+  "prestart": "node scripts/copy-cesium.js",
   "start": "react-scripts start",
   "build": "react-scripts build",
   "test": "react-scripts test",

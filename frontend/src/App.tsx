@@ -1,8 +1,14 @@
 import './App.css';
+import { ApiStatusBanner, ApiStatusProvider } from './components/ApiStatusProvider';
 import IntegratedMarsExplorer from './components/IntegratedMarsExplorer';
 
 function App() {
-  return <IntegratedMarsExplorer initialView="2d" />;
+  return (
+    <ApiStatusProvider>
+      <IntegratedMarsExplorer initialView="2d" />
+      <ApiStatusBanner />
+    </ApiStatusProvider>
+  );
 }
 
 export default App;
