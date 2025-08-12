@@ -17,6 +17,7 @@ import {
     Scene,
     ShaderMaterial,
     SphereGeometry,
+    Texture,
     TextureLoader,
     Vector3,
     WebGLRenderer
@@ -213,17 +214,17 @@ export const Mars3DGlobe = ({
 
     try {
       // Try loading the simplified texture first
-      const texture = await new Promise((resolve, reject) => {
+      const texture: Texture = await new Promise<Texture>((resolve, reject) => {
         textureLoader.current.load(
           MARS_TEXTURE_URLS.fallback,
-          (texture) => {
-            texture.wrapS = RepeatWrapping;
-            texture.wrapT = RepeatWrapping;
-            texture.minFilter = LinearFilter;
-            resolve(texture);
+          (loaded: Texture) => {
+            loaded.wrapS = RepeatWrapping;
+            loaded.wrapT = RepeatWrapping;
+            loaded.minFilter = LinearFilter;
+            resolve(loaded);
           },
           undefined,
-          (error) => reject(error)
+            (error) => reject(error)
         );
       });
 

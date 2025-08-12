@@ -40,8 +40,8 @@ const Mars3DViewer: React.FC = () => {
 			shouldAnimate: false,
 		});
 
-		// Replace global ellipsoid with Mars for camera/cartographic conversions
-		viewer.scene.globe.ellipsoid = marsEllipsoid;
+		// NOTE: Cesium Globe.ellipsoid has only a getter in recent Cesium versions; we avoid direct reassignment.
+		// Mars-specific ellipsoid is applied through the tiling scheme & cartographic conversions where needed.
 
 				// Use our proxy imagery provider as the only base layer
 				try {
