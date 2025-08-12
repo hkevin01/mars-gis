@@ -252,8 +252,7 @@ mars-gis/
 ├── 📁 scripts/                     # Utility Scripts
 │   ├── reorganize_project.py       # Project reorganization utility
 │   ├── validate_reorganization.py  # Project validation utility
-│   ├── demo-mars-gui.sh            # Demo launch script
-│   └── start_server.sh             # Server startup script
+│   └── test-mars-api.sh            # NASA Mars API testing script
 ├── 📁 config/                      # Configuration Files
 ├── 📁 data/                        # Data Storage
 ├── 📁 logs/                        # Log Files

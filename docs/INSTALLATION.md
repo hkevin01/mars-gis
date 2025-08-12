@@ -136,7 +136,7 @@ cd ..
 
 #### Step 5: Start the Application
 ```bash
-./start_server.sh
+PYTHONPATH=/home/kevin/Projects/mars-gis/src uvicorn mars_gis.main:app --reload
 ```
 
 ### Method 2: Docker Installation
