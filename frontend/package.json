@@ -46,9 +46,10 @@
     "prettier": "^2.8.3"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+  "postinstall": "node scripts/copy-cesium.js",
+  "start": "react-scripts start",
+  "build": "react-scripts build",
+  "test": "react-scripts test",
     "eject": "react-scripts eject",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",

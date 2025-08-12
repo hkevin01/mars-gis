@@ -1,8 +1,8 @@
 // Integrated Mars Explorer - Seamless 2D/3D Navigation
 import { ChevronLeft, ChevronRight, Eye, Globe, Map, Maximize2, Navigation } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
-import Enhanced3DInterface from '../features/3d-visualization/components/Enhanced3DInterface';
 import OpenLayersMarsMapper from '../features/mars-mapping/components/OpenLayersMarsMapper';
+import Mars3DViewer from '../views/Mars3DViewer';
 
 type ViewModeId = '2d' | '3d' | 'split';
 
@@ -40,20 +40,12 @@ const IntegratedMarsExplorer: React.FC<IntegratedMarsExplorerProps> = ({
   initialView = '2d'
 }) => {
   const [currentView, setCurrentView] = useState<ViewModeId>(initialView);
-  const [selectedLocation, setSelectedLocation] = useState<{lat: number, lon: number} | null>(null);
   const [showModeSelector, setShowModeSelector] = useState(false);
   const [syncViews, setSyncViews] = useState(true);
 
   // Handle location selection from either view
-  const handleLocationSelect = useCallback((lat: number, lon: number) => {
-    setSelectedLocation({ lat, lon });
-
-    // If in sync mode, update both views
-    if (syncViews) {
-      // This would trigger updates in both 2D and 3D views
-      // Future enhancement: actual view synchronization
-    }
-  }, [syncViews]);
+  // Note: 3D Cesium view does not yet emit selection events.
+  // Future: wire Cesium ScreenSpaceEventHandler to update selectedLocation.
 
   // Switch between view modes
   const switchViewMode = useCallback((mode: ViewModeId) => {
@@ -77,10 +69,7 @@ const IntegratedMarsExplorer: React.FC<IntegratedMarsExplorerProps> = ({
       case '3d':
         return (
           <div className="w-full h-full">
-            <Enhanced3DInterface
-              onLocationSelect={handleLocationSelect}
-              initialView="globe"
-            />
+            <Mars3DViewer />
           </div>
         );
 
@@ -103,10 +92,7 @@ const IntegratedMarsExplorer: React.FC<IntegratedMarsExplorerProps> = ({
             {/* 3D View - Right Side */}
             <div className="w-1/2 h-full">
               <div className="relative w-full h-full">
-                <Enhanced3DInterface
-                  onLocationSelect={handleLocationSelect}
-                  initialView="globe"
-                />
+                <Mars3DViewer />
                 <div className="absolute top-4 left-4 bg-gray-900/90 backdrop-blur-sm rounded-lg px-3 py-1">
                   <div className="text-white text-sm font-medium flex items-center">
                     <Globe className="w-4 h-4 mr-2 text-orange-400" />
@@ -218,24 +204,7 @@ const IntegratedMarsExplorer: React.FC<IntegratedMarsExplorerProps> = ({
         </button>
       </div>
 
-      {/* Selected Location Info */}
-      {selectedLocation && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="bg-gray-900/95 backdrop-blur-sm rounded-lg p-4 border border-gray-700 shadow-lg">
-            <div className="text-white text-center">
-              <div className="text-sm font-medium mb-1">Selected Location</div>
-              <div className="text-xs text-gray-300">
-                {selectedLocation.lat.toFixed(6)}°, {selectedLocation.lon.toFixed(6)}°
-              </div>
-              {syncViews && currentView === 'split' && (
-                <div className="text-xs text-green-400 mt-1">
-                  Views synchronized
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+  {/* Selected Location Info - future enhancement when 3D emits selection */}
 
       {/* Instructions */}
       <div className="absolute bottom-4 left-4 z-50">

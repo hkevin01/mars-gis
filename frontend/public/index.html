@@ -12,6 +12,11 @@
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <title>MARS-GIS Dashboard</title>
+    <script>
+      // Required for Cesium static assets
+      window.CESIUM_BASE_URL = '/cesium';
+    </script>
+  <link rel="stylesheet" href="/cesium/Widgets/widgets.css" />
     <style>
       /* Loading screen styles */
       .loading-container {

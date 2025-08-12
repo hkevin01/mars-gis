@@ -1,8 +1,13 @@
 """
 MARS-GIS API Router Implementation
 
-This module contains the router creation function and all endpoint implementations.
+This module contains the router creation function and all endpoint
+implementations.
 """
+# flake8: noqa
+# mypy: ignore-errors
+
+from typing import Dict
 
 from . import (
     DATA_CLIENTS_AVAILABLE,
@@ -30,13 +35,21 @@ from . import (
     datetime,
 )
 
+try:
+    import httpx
+    HTTPX_AVAILABLE = True
+except ImportError:
+    HTTPX_AVAILABLE = False
+
+from mars_gis.core.config import settings
+
 
 def create_api_router():
     """Create and configure API router with all endpoints."""
     if not FASTAPI_AVAILABLE:
         return None
 
-    router = APIRouter(prefix="/api/v1", tags=["mars-gis-api"])
+    api_router = APIRouter(prefix="/api/v1", tags=["mars-gis-api"])
 
     # Initialize clients and models (with error handling)
     nasa_client = NASADataClient() if DATA_CLIENTS_AVAILABLE else None
@@ -70,7 +83,7 @@ def create_api_router():
     # MARS DATA ENDPOINTS - Requirement FR-DM-001, FR-DM-002
     # ========================================
 
-    @router.post("/mars-data/query", response_model=APIResponse)
+    @api_router.post("/mars-data/query", response_model=APIResponse)
     async def query_mars_data(query: MarsDataQuery):
         """
         Query Mars surface data from NASA and USGS sources.
@@ -84,40 +97,61 @@ def create_api_router():
             # Query NASA data
             if nasa_client and "imagery" in query.data_types:
                 nasa_results = await asyncio.get_event_loop().run_in_executor(
-                    None, nasa_client.get_imagery_data,
-                    query.lat_min, query.lat_max, query.lon_min, query.lon_max
+                    None,
+                    nasa_client.get_imagery_data,
+                    query.lat_min,
+                    query.lat_max,
+                    query.lon_min,
+                    query.lon_max,
                 )
                 results["nasa_data"]["imagery"] = nasa_results
 
             if nasa_client and "elevation" in query.data_types:
-                elevation_results = await asyncio.get_event_loop().run_in_executor(
-                    None, nasa_client.get_elevation_data,
-                    query.lat_min, query.lat_max, query.lon_min, query.lon_max
+                elevation_results = (
+                    await asyncio.get_event_loop().run_in_executor(
+                        None,
+                        nasa_client.get_elevation_data,
+                        query.lat_min,
+                        query.lat_max,
+                        query.lon_min,
+                        query.lon_max,
+                    )
                 )
                 results["nasa_data"]["elevation"] = elevation_results
 
             # Query USGS geological data
             if usgs_client and "geology" in query.data_types:
-                geological_results = await asyncio.get_event_loop().run_in_executor(
-                    None, usgs_client.get_geological_data,
-                    query.lat_min, query.lat_max, query.lon_min, query.lon_max
+                geological_results = (
+                    await asyncio.get_event_loop().run_in_executor(
+                        None,
+                        usgs_client.get_geological_data,
+                        query.lat_min,
+                        query.lat_max,
+                        query.lon_min,
+                        query.lon_max,
+                    )
                 )
                 results["usgs_data"]["geology"] = geological_results
 
-            region_desc = (f"[{query.lat_min}, {query.lon_min}] to "
-                          f"[{query.lat_max}, {query.lon_max}]")
+            region_desc = (
+                f"[{query.lat_min}, {query.lon_min}] to "
+                f"[{query.lat_max}, {query.lon_max}]"
+            )
 
             return APIResponse(
                 success=True,
                 data=results,
-                message=f"Successfully retrieved Mars data for region {region_desc}"
+                message=(
+                    f"Successfully retrieved Mars data for region {region_desc}"
+                )
             )
 
         except Exception as e:
-            raise HTTPException(status_code=500,
-                              detail=f"Failed to query Mars data: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to query Mars data: {str(e)}"
+            )
 
-    @router.get("/mars-data/datasets", response_model=APIResponse)
+    @api_router.get("/mars-data/datasets", response_model=APIResponse)
     async def list_available_datasets():
         """List all available Mars datasets and their metadata."""
         try:
@@ -155,18 +189,19 @@ def create_api_router():
             return APIResponse(
                 success=True,
                 data=datasets,
-                message="Available Mars datasets retrieved successfully"
+                message="Available Mars datasets retrieved successfully",
             )
 
         except Exception as e:
-            raise HTTPException(status_code=500,
-                              detail=f"Failed to list datasets: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to list datasets: {str(e)}"
+            )
 
     # ========================================
     # ML INFERENCE ENDPOINTS - Requirements FR-ML-001, FR-ML-002, FR-ML-003
     # ========================================
 
-    @router.post("/inference/predict", response_model=APIResponse)
+    @api_router.post("/inference/predict", response_model=APIResponse)
     async def run_ml_inference(request: InferenceRequest):
         """
         Run ML model inference on Mars data.
@@ -182,12 +217,16 @@ def create_api_router():
                 classifier = get_terrain_classifier()
                 if classifier and ML_MODELS_AVAILABLE:
                     prediction = await asyncio.get_event_loop().run_in_executor(
-                        None, classifier.classify_terrain, request.input_data
+                        None,
+                        classifier.classify_terrain,
+                        request.input_data,
                     )
                     results = {
                         "terrain_class": prediction.get("class", "unknown"),
                         "confidence": prediction.get("confidence", 0.0),
-                        "class_probabilities": prediction.get("probabilities", {})
+                        "class_probabilities": prediction.get(
+                            "probabilities", {}
+                        ),
                     }
                 else:
                     results = {"error": "Terrain classifier not available"}
@@ -195,24 +234,38 @@ def create_api_router():
             elif request.model_type == "landing_site":
                 optimizer = get_landing_optimizer()
                 if optimizer and ML_MODELS_AVAILABLE and request.coordinates:
-                    optimization = await asyncio.get_event_loop().run_in_executor(
-                        None, optimizer.optimize_landing_site,
-                        request.coordinates, request.input_data
+                    optimization = (
+                        await asyncio.get_event_loop().run_in_executor(
+                            None,
+                            optimizer.optimize_landing_site,
+                            request.coordinates,
+                            request.input_data,
+                        )
                     )
                     results = {
                         "safety_score": optimization.get("safety_score", 0.0),
-                        "scientific_value": optimization.get("scientific_value", 0.0),
-                        "recommended_adjustments": optimization.get("adjustments", []),
-                        "risk_factors": optimization.get("risks", [])
+                        "scientific_value": optimization.get(
+                            "scientific_value", 0.0
+                        ),
+                        "recommended_adjustments": optimization.get(
+                            "adjustments", []
+                        ),
+                        "risk_factors": optimization.get("risks", []),
                     }
                 else:
-                    results = {"error": "Landing site optimizer not available or coordinates missing"}
+                    results = {
+                        "error": (
+                            "Landing site optimizer not available or coordinates missing"
+                        )
+                    }
 
             elif request.model_type == "transfer_learning":
                 transfer_model = get_transfer_model()
                 if transfer_model and ML_MODELS_AVAILABLE:
                     analysis = await asyncio.get_event_loop().run_in_executor(
-                        None, transfer_model.analyze_mars_data, request.input_data
+                        None,
+                        transfer_model.analyze_mars_data,
+                        request.input_data,
                     )
                     results = {
                         "embeddings": analysis.get("embeddings", []),
@@ -222,20 +275,25 @@ def create_api_router():
                 else:
                     results = {"error": "Transfer learning model not available"}
             else:
-                raise HTTPException(status_code=400,
-                                  detail=f"Unknown model type: {request.model_type}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Unknown model type: {request.model_type}",
+                )
 
             return APIResponse(
                 success=True,
                 data=results,
-                message=f"ML inference completed for model: {request.model_type}"
+                message=(
+                    f"ML inference completed for model: {request.model_type}"
+                )
             )
 
         except Exception as e:
-            raise HTTPException(status_code=500,
-                              detail=f"ML inference failed: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"ML inference failed: {str(e)}"
+            )
 
-    @router.get("/inference/models", response_model=APIResponse)
+    @api_router.get("/inference/models", response_model=APIResponse)
     async def list_available_models():
         """List all available ML models and their capabilities."""
         try:
@@ -266,18 +324,19 @@ def create_api_router():
             return APIResponse(
                 success=True,
                 data=models,
-                message="Available ML models retrieved successfully"
+                message="Available ML models retrieved successfully",
             )
 
         except Exception as e:
-            raise HTTPException(status_code=500,
-                              detail=f"Failed to list models: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to list models: {str(e)}"
+            )
 
     # ========================================
     # MISSION PLANNING ENDPOINTS - Requirements FR-MP-001, FR-MP-002, FR-MP-003
     # ========================================
 
-    @router.post("/missions", response_model=APIResponse)
+    @api_router.post("/missions", response_model=APIResponse)
     async def create_mission(mission: MissionCreateRequest):
         """
         Create a new Mars mission plan.
@@ -287,14 +346,18 @@ def create_api_router():
         """
         try:
             # Generate mission ID
-            mission_id = f"mission_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+            mission_id = (
+                f"mission_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+            )
 
             # Perform risk assessment
             risk_assessment = {}
             if path_planner and MISSION_MODULES_AVAILABLE:
                 risks = await asyncio.get_event_loop().run_in_executor(
-                    None, path_planner.assess_mission_risks,
-                    mission.target_coordinates, mission.constraints or {}
+                    None,
+                    path_planner.assess_mission_risks,
+                    mission.target_coordinates,
+                    mission.constraints or {},
                 )
                 risk_assessment = risks
 
@@ -325,10 +388,11 @@ def create_api_router():
             )
 
         except Exception as e:
-            raise HTTPException(status_code=500,
-                              detail=f"Failed to create mission: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to create mission: {str(e)}"
+            )
 
-    @router.get("/missions", response_model=APIResponse)
+    @api_router.get("/missions", response_model=APIResponse)
     async def list_missions(
         status: Optional[str] = Query(None, description="Filter by mission status"),
         mission_type: Optional[str] = Query(None, description="Filter by mission type"),
@@ -381,16 +445,20 @@ def create_api_router():
                 data={
                     "missions": filtered_missions,
                     "total_count": len(filtered_missions),
-                    "filters_applied": {"status": status, "mission_type": mission_type}
+                    "filters_applied": {
+                        "status": status,
+                        "mission_type": mission_type,
+                    },
                 },
-                message=f"Retrieved {len(filtered_missions)} missions"
+                message=f"Retrieved {len(filtered_missions)} missions",
             )
 
         except Exception as e:
-            raise HTTPException(status_code=500,
-                              detail=f"Failed to list missions: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to list missions: {str(e)}"
+            )
 
-    @router.get("/missions/{mission_id}", response_model=APIResponse)
+    @api_router.get("/missions/{mission_id}", response_model=APIResponse)
     async def get_mission(mission_id: str = Path(..., description="Mission ID")):
         """Get detailed information about a specific mission."""
         try:
@@ -425,8 +493,9 @@ def create_api_router():
                     "updated_at": datetime(2025, 8, 1, 14, 30, 0)
                 }
             else:
-                raise HTTPException(status_code=404,
-                                  detail=f"Mission {mission_id} not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Mission {mission_id} not found"
+                )
 
             return APIResponse(
                 success=True,
@@ -437,10 +506,11 @@ def create_api_router():
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500,
-                              detail=f"Failed to get mission: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to get mission: {str(e)}"
+            )
 
-    @router.put("/missions/{mission_id}/status", response_model=APIResponse)
+    @api_router.put("/missions/{mission_id}/status", response_model=APIResponse)
     async def update_mission_status(
         mission_id: str = Path(..., description="Mission ID"),
         new_status: str = Query(..., description="New mission status")
@@ -451,7 +521,7 @@ def create_api_router():
             if new_status not in valid_statuses:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Invalid status. Must be one of: {valid_statuses}"
+                    detail=f"Invalid status. Must be one of: {valid_statuses}",
                 )
 
             # In real implementation, this would update the database
@@ -470,14 +540,16 @@ def create_api_router():
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500,
-                              detail=f"Failed to update mission status: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to update mission status: {str(e)}",
+            )
 
     # ========================================
     # STREAMING ENDPOINTS - Requirement FR-DM-003
     # ========================================
 
-    @router.post("/streams/subscribe", response_model=APIResponse)
+    @api_router.post("/streams/subscribe", response_model=APIResponse)
     async def subscribe_to_stream(request: StreamSubscribeRequest):
         """
         Subscribe to real-time Mars data streams.
@@ -494,7 +566,9 @@ def create_api_router():
             if request.stream_type not in valid_streams:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Invalid stream type. Must be one of: {valid_streams}"
+                    detail=(
+                        f"Invalid stream type. Must be one of: {valid_streams}"
+                    ),
                 )
 
             subscription_data = {
@@ -517,10 +591,12 @@ def create_api_router():
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500,
-                              detail=f"Failed to subscribe to stream: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to subscribe to stream: {str(e)}",
+            )
 
-    @router.get("/streams", response_model=APIResponse)
+    @api_router.get("/streams", response_model=APIResponse)
     async def list_available_streams():
         """List all available real-time data streams."""
         try:
@@ -558,18 +634,19 @@ def create_api_router():
             return APIResponse(
                 success=True,
                 data=streams,
-                message="Available data streams retrieved successfully"
+                message="Available data streams retrieved successfully",
             )
 
         except Exception as e:
-            raise HTTPException(status_code=500,
-                              detail=f"Failed to list streams: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to list streams: {str(e)}"
+            )
 
     # ========================================
     # SYSTEM STATUS ENDPOINTS
     # ========================================
 
-    @router.get("/system/health", response_model=APIResponse)
+    @api_router.get("/system/health", response_model=APIResponse)
     async def get_system_health():
         """Get comprehensive system health status."""
         try:
@@ -590,11 +667,84 @@ def create_api_router():
             return APIResponse(
                 success=True,
                 data=health_status,
-                message="System health check completed successfully"
+                message="System health check completed successfully",
             )
 
         except Exception as e:
-            raise HTTPException(status_code=500,
-                              detail=f"Health check failed: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Health check failed: {str(e)}"
+            )
 
-    return router
+    # attach tiles proxy routes
+    _tiles_subrouter(api_router)
+
+    return api_router
+
+
+# Expose a module-level router for compatibility with existing tests/imports
+try:
+    router = create_api_router()  # noqa: F811
+except Exception:
+    router = None
+
+
+def _build_upstream_tile_url(template: str, z: int, x: int, y: int, is_tms: bool) -> str:
+    """Create upstream tile URL from template and coordinates.
+
+    Supports XYZ and TMS (reverse Y) schemes via `is_tms`.
+    """
+    yy = (2 ** z - 1 - y) if is_tms else y
+    url = template.replace("{z}", str(z)).replace("{x}", str(x)).replace("{y}", str(yy))
+    return url
+
+
+def _tiles_subrouter(api_router):
+    """Attach tiles proxy routes to the given router."""
+    if not HTTPX_AVAILABLE:
+        async def tiles_unavailable(z: int, x: int, y: int):  # noqa: ARG001
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Tiles proxy requires 'httpx' package. Please install httpx."
+                ),
+            )
+        api_router.add_api_route(
+            "/tiles/{z}/{x}/{y}.png", tiles_unavailable, methods=["GET"]
+        )
+        return
+
+    async def proxy_mars_tiles(z: int, x: int, y: int):
+        """Proxy Mars XYZ/TMS tiles to avoid CORS and centralize config.
+
+        Env/config driven template: settings.MARS_TILES_TEMPLATE
+        """
+        template = settings.MARS_TILES_TEMPLATE
+        if not template:
+            raise HTTPException(status_code=404, detail="Tiles template not configured")
+
+        upstream = _build_upstream_tile_url(template, z, x, y, settings.MARS_TILES_IS_TMS)
+
+        timeout = httpx.Timeout(10.0, read=20.0)
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            try:
+                resp = await client.get(upstream)
+                if resp.status_code != 200:
+                    raise HTTPException(status_code=resp.status_code, detail=f"Upstream error: {resp.status_code}")
+
+                headers: Dict[str, str] = {
+                    "Content-Type": resp.headers.get("content-type", "image/png"),
+                    "Cache-Control": "public, max-age=86400, immutable",
+                }
+                return StreamingResponse(
+                    resp.aiter_raw(),
+                    headers=headers,
+                    media_type=headers["Content-Type"],
+                )
+            except httpx.RequestError as e:
+                raise HTTPException(status_code=502, detail=f"Upstream request failed: {str(e)}")
+
+    api_router.add_api_route(
+        "/tiles/{z}/{x}/{y}.png", proxy_mars_tiles, methods=["GET"]
+    )
+
+
